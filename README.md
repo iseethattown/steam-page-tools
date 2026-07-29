@@ -12,31 +12,29 @@ It is designed for people who manage large badge libraries, compare card-drop st
 
 > **Unofficial project:** Steam Page Tools is independent and is not affiliated with or endorsed by Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
 
-## What it does
+## Features
 
-### Badge tools
+### Badge pages
 
-On the signed-in user's own Steam Community badge pages, Steam Page Tools can:
+These tools are available only on the signed-in account's own badge pages.
 
-- show only games with card drops remaining, including results found on additional badge pages;
-- identify complete card sets across paginated results;
-- prepare a guarded bulk-crafting queue with a detailed confirmation;
-- rescan rewards that may make another badge level craftable;
-- display live progress and a stop-after-current-request control; and
-- pace requests, react to rate limits, enforce safety limits, and prevent concurrent crafting runs in multiple tabs.
+- Show only games with card drops remaining across paginated badge results.
+- Auto-craft complete card sets across your badge pages, with confirmation, live progress, request pacing, rate-limit handling, cross-tab protection, safety limits, and a stop-after-current-request control.
 
-Badge crafting consumes Steam Community cards and cannot be undone. Nothing is crafted until the user explicitly approves the confirmation.
+> [!WARNING]
+> Auto-crafting consumes cards and cannot be undone. The extension asks for confirmation before crafting begins.
 
-### Store tools
+<img src="https://i.ibb.co/pj09Cs4t/Screenshot-2026-07-28-173351.png" alt="Steam badge filter and auto-craft controls">
 
-On Steam Store search results, Steam Page Tools can:
+### Steam Store search results
 
-- add an accessible selection control to individual game results;
-- retain selected games across navigation and browser restarts;
-- add the selected games to the cart using Steam's first/default package; and
-- refresh the current wishlist, skip games already present, and add the remaining selections.
+- Select games directly from the search results.
+- Add selected games to the cart in one run.
+- Add selected games to the wishlist after refreshing the account's current wishlist; games already on it are skipped automatically.
 
-Bundle rows are intentionally not supported.
+Bundle rows are not supported. When a game has multiple purchase options, the cart action uses Steam's first/default package.
+
+<img src="https://i.ibb.co/wFfwYrVW/Screenshot-2026-07-26-012816.png" alt="Selection checkboxes on Steam search results"><img src="https://i.ibb.co/yc324R1q/image.png" alt="Bulk cart and wishlist action bar">
 
 ## Where it runs
 
