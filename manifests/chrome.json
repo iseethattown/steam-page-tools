@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Steam Page Tools",
+  "version": "1.0.0",
+  "description": "Unofficial Steam badge filtering, safe bulk badge crafting, and bulk Store cart and wishlist tools for Chrome and Firefox.",
+  "homepage_url": "https://github.com/x0697x/steam-page-tools-extension",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://steamcommunity.com/id/*/badges*",
+        "https://steamcommunity.com/profiles/*/badges*",
+        "https://store.steampowered.com/search*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}
