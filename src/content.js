@@ -754,7 +754,12 @@
 
             searchBar.id = 'spt-owned-badge-search';
             searchBar.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-start; gap:10px; margin:10px 0; flex-wrap:wrap;';
+                'display:flex; align-items:flex-start; justify-content:flex-start; gap:10px; margin:10px 0; flex-wrap:wrap;';
+
+            const searchField = document.createElement('div');
+
+            searchField.style.cssText =
+                'display:flex; flex-direction:column; gap:3px; width:320px; max-width:100%; flex:0 1 320px; min-width:0;';
 
             const input = document.createElement('input');
 
@@ -769,7 +774,7 @@
             input.spellcheck = false;
             input.maxLength = 100;
             input.style.cssText =
-                'width:320px; max-width:100%; height:32px; box-sizing:border-box; padding:0 10px; border:1px solid #000; border-radius:3px; background:#2a3f5a; color:#fff; font-family:"Motiva Sans",Arial,sans-serif; font-size:14px; box-shadow:1px 1px 0 rgba(255,255,255,.1);';
+                'width:100%; height:32px; box-sizing:border-box; padding:0 10px; border:1px solid #000; border-radius:3px; background:#2a3f5a; color:#fff; font-family:"Motiva Sans",Arial,sans-serif; font-size:14px; box-shadow:1px 1px 0 rgba(255,255,255,.1);';
 
             const searchStatus = document.createElement('span');
 
@@ -777,10 +782,11 @@
             searchStatus.setAttribute('role', 'status');
             searchStatus.setAttribute('aria-live', 'polite');
             searchStatus.style.cssText =
-                'color:#8f98a0; font-size:12px; margin-left:auto; text-align:right;';
+                'display:block; color:#8f98a0; font-size:12px; line-height:14px; text-align:left;';
 
-            searchBar.appendChild(input);
-            searchBar.appendChild(searchStatus);
+            searchField.appendChild(input);
+            searchField.appendChild(searchStatus);
+            searchBar.appendChild(searchField);
             container.insertBefore(searchBar, currentRows[0]);
 
             // Search aggregates every matching row onto this page. Preserve
@@ -1129,12 +1135,12 @@
 
             actionGroup.id = 'spt-badge-actions';
             actionGroup.style.cssText =
-                'display:flex; align-items:center; gap:3px; flex:0 0 auto; margin-left:auto;';
+                'display:flex; align-items:center; gap:3px; flex:0 0 auto; margin-top:5px; margin-left:auto;';
 
             const statusGroup = document.createElement('div');
 
             statusGroup.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:0 1 auto; min-width:0; flex-wrap:wrap;';
+                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:0 1 auto; min-width:0; margin-top:5px; flex-wrap:wrap;';
 
             const dropCounterGroup = document.createElement('span');
 

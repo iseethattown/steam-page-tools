@@ -12,6 +12,7 @@ All notable changes to the browser-extension edition are documented here.
 ### Changed
 
 - Cross-page badge-search results are presented in one aggregated view; Steam's server-side pagination and page summary are hidden while a query is active and restored when it is cleared.
+- Badge-search loading and result status appears directly below the search field so it cannot displace the badge action controls.
 
 ## 1.0.0 - 2026-07-29
 
