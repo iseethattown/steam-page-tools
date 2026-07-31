@@ -22,6 +22,7 @@ On every Steam Community profile badge page:
 
 On the signed-in user's own badge pages:
 
+- Count games with card drops remaining across every paginated badge result.
 - Show only games with card drops remaining across paginated badge results.
 - Auto-craft complete card sets across your badge pages, with confirmation, live progress, request pacing, rate-limit handling, cross-tab protection, safety limits, and a stop-after-current-request control.
 

@@ -24,6 +24,13 @@ This document records completed verification and the scenarios that remain befor
 ### Badge filtering
 
 - [x] Confirm both owned-profile badge controls appear exactly once.
+- [ ] Confirm the search field and owned-profile badge controls share one aligned toolbar at desktop widths and wrap cleanly on narrow pages.
+- [ ] Confirm the card-drop counter automatically reports the number of games with drops remaining across every badge page.
+- [ ] Confirm the counter stays beside the filter button, shows a compact spinner without shifting the layout, and grows numerically without flashing a progress message; confirm the spinner becomes a check after a complete scan or a warning mark alongside `N+` after an incomplete scan.
+- [ ] Confirm enabling the drop filter immediately shows current and cached matches, progressively adds later matches from the shared counter scan, and does not repeat successful page requests.
+- [ ] Confirm progressive filtering relies on the counter spinner without showing a separate "Loading page" message or moving the action controls to another row.
+- [ ] Confirm the drop filter hides both native navigation bars while active and restores their original inline display values when disabled.
+- [ ] Confirm filtering does not show a redundant "Showing N games" completion message; the pressed button state and counter communicate the result.
 - [x] Scan a 24-page badge library with **Show only drops remaining** enabled and confirm the final count completes.
 - [x] Disable the filter and confirm all 150 original rows return with no hidden or cloned rows remaining.
 
@@ -32,6 +39,7 @@ This document records completed verification and the scenarios that remain befor
 - [ ] Confirm the search field appears exactly once on owned and non-owned profile badge pages.
 - [ ] Search by game name and badge name across a multi-page profile and confirm all matches appear in one result view.
 - [ ] Confirm the native page summary and navigation are hidden while a query is active, including while results are loading.
+- [ ] Confirm Steam's navigation remains hidden after aggregated results render, including if its pager markup or inline display style is refreshed.
 - [ ] Clear with the input control and Escape; confirm the original rows and native pagination return exactly as rendered by Steam.
 - [ ] Confirm accented text, multiple search terms, zero matches, delayed badge artwork, a failed page fetch, and the 200-page safety limit behave as documented.
 

@@ -754,7 +754,7 @@
 
             searchBar.id = 'spt-owned-badge-search';
             searchBar.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-end; gap:10px; margin:10px 0; flex-wrap:wrap;';
+                'display:flex; align-items:center; justify-content:flex-start; gap:10px; margin:10px 0; flex-wrap:wrap;';
 
             const input = document.createElement('input');
 
@@ -779,30 +779,29 @@
             searchStatus.style.cssText =
                 'color:#8f98a0; font-size:12px; margin-left:auto; text-align:right;';
 
-            searchBar.appendChild(searchStatus);
             searchBar.appendChild(input);
+            searchBar.appendChild(searchStatus);
             container.insertBefore(searchBar, currentRows[0]);
 
             // Search aggregates every matching row onto this page. Preserve
             // Steam's inline pagination styles so the server-side pager can be
             // hidden for search mode and restored exactly when it ends.
-            let paginationElements = [
-                ...document.querySelectorAll('.profile_paging'),
-            ];
-
-            if (!paginationElements.length) {
-                paginationElements = [
-                    ...document.querySelectorAll(
-                        '.profile_paging_summary, .profile_paging_links'
-                    ),
+            function getPaginationElements() {
+                const pagingContainers = [
+                    ...document.querySelectorAll('.profile_paging'),
                 ];
+
+                return pagingContainers.length
+                    ? pagingContainers
+                    : [
+                        ...document.querySelectorAll(
+                            '.profile_paging_summary, .profile_paging_links'
+                        ),
+                    ];
             }
 
-            const paginationDisplays = new Map(
-                paginationElements.map((element) => (
-                    [element, element.style.display]
-                ))
-            );
+            const paginationDisplays = new Map();
+            const paginationHideReasons = new Set();
             let indexedBadges = null;
             let indexPromise = null;
             let resultClones = [];
@@ -811,10 +810,45 @@
             let debounceTimer = null;
             let beforeSearch = () => {};
 
-            function setPaginationHidden(isHidden) {
+            function setPaginationHidden(isHidden, reason = 'search') {
+                if (isHidden) {
+                    paginationHideReasons.add(reason);
+                } else {
+                    paginationHideReasons.delete(reason);
+                }
+
+                if (paginationHideReasons.size) {
+                    getPaginationElements().forEach((element) => {
+                        if (!paginationDisplays.has(element)) {
+                            paginationDisplays.set(element, {
+                                value: element.style.getPropertyValue('display'),
+                                priority: element.style.getPropertyPriority(
+                                    'display'
+                                ),
+                            });
+                        }
+
+                        element.style.setProperty(
+                            'display',
+                            'none',
+                            'important'
+                        );
+                    });
+                    return;
+                }
+
                 paginationDisplays.forEach((display, element) => {
-                    element.style.display = isHidden ? 'none' : display;
+                    if (display.value) {
+                        element.style.setProperty(
+                            'display',
+                            display.value,
+                            display.priority
+                        );
+                    } else {
+                        element.style.removeProperty('display');
+                    }
                 });
+                paginationDisplays.clear();
             }
 
             function removeResultClones() {
@@ -935,6 +969,10 @@
                     resultClones.push(clone);
                 });
 
+                // Steam can refresh its paging controls while results render.
+                // Re-query and enforce search mode after the clones are added.
+                setPaginationHidden(true);
+
                 const countText = matches.length === 1
                     ? '1 owned badge'
                     : `${matches.length} owned badges`;
@@ -1023,12 +1061,16 @@
 
             return {
                 clear: clearSearch,
+                element: searchBar,
                 setBeforeSearch(handler) {
                     beforeSearch = handler;
                 },
                 setDisabled(isDisabled) {
                     input.disabled = isDisabled;
                     input.style.opacity = isDisabled ? '0.6' : '';
+                },
+                setFilterPaginationHidden(isHidden) {
+                    setPaginationHidden(isHidden, 'filter');
                 },
             };
         }
@@ -1049,30 +1091,99 @@
                 return true;
             }
 
-            // Separate status and action groups so empty status text does not
-            // add spacing between the buttons.
-            const bar = document.createElement('div');
+            const currentPage = getCurrentPageNumber();
+            const detectedMaxPage = Math.max(
+                currentPage,
+                getMaxPageFromPagination() || 1
+            );
+            const maxPage = Math.min(detectedMaxPage, MAX_PAGES);
+            const pageRowsPromises = new Map([
+                [currentPage, Promise.resolve(rows)],
+            ]);
 
-            bar.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-end; gap:10px; margin:10px 0; flex-wrap:wrap;';
+            // The counter and filter scan the same pages. Cache those reads so
+            // activating the filter while the count is running does not send a
+            // second request for each page.
+            function getPageRowsForDrops(page) {
+                if (!pageRowsPromises.has(page)) {
+                    const pageRowsPromise = fetchPageRowsWithRetry(page)
+                        .then((pageRows) => {
+                            if (pageRows === null) {
+                                pageRowsPromises.delete(page);
+                            }
+
+                            return pageRows;
+                        });
+
+                    pageRowsPromises.set(page, pageRowsPromise);
+                }
+
+                return pageRowsPromises.get(page);
+            }
+
+            // Share the search row so all badge tools align as one responsive
+            // toolbar instead of creating a second row with its own margins.
+            const bar = badgeSearch.element;
 
             const actionGroup = document.createElement('div');
 
             actionGroup.id = 'spt-badge-actions';
             actionGroup.style.cssText =
-                'display:flex; align-items:center; gap:4px; flex:0 0 auto; margin-left:auto;';
+                'display:flex; align-items:center; gap:3px; flex:0 0 auto; margin-left:auto;';
 
             const statusGroup = document.createElement('div');
 
             statusGroup.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:1 1 320px; min-width:0; flex-wrap:wrap;';
+                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:0 1 auto; min-width:0; flex-wrap:wrap;';
 
-            const status = document.createElement('span');
+            const dropCounterGroup = document.createElement('span');
 
-            status.id = 'drop-filter-status';
+            dropCounterGroup.setAttribute('role', 'status');
+            dropCounterGroup.setAttribute('aria-live', 'polite');
+            dropCounterGroup.setAttribute('aria-busy', 'true');
+            dropCounterGroup.style.cssText =
+                'display:inline-flex; align-items:center; gap:3px; flex:0 0 auto; color:#8f98a0; font-size:12px; white-space:nowrap;';
 
-            status.style.cssText =
-                'color:#8f98a0; font-size:12px;';
+            const dropCounterLabel = document.createElement('span');
+
+            dropCounterLabel.textContent = 'Games with drops:';
+
+            const dropCounter = document.createElement('span');
+
+            dropCounter.id = 'spt-drops-remaining-count';
+            dropCounter.setAttribute(
+                'aria-label',
+                '0 games with card drops remaining'
+            );
+            dropCounter.style.cssText =
+                'display:inline-block; color:#a4d007; min-width:1ch; font-weight:600; text-align:left; font-variant-numeric:tabular-nums;';
+            dropCounter.textContent = '0';
+            dropCounter.title = 'Games with card drops remaining';
+
+            const dropCounterLoader = document.createElement('span');
+
+            dropCounterLoader.setAttribute('aria-hidden', 'true');
+            dropCounterLoader.style.cssText =
+                'display:inline-block; width:10px; height:10px; box-sizing:border-box; border:1.5px solid rgba(143,152,160,.35); border-top-color:#8f98a0; border-radius:50%;';
+
+            const dropCounterLoadingAnimation = window.matchMedia(
+                '(prefers-reduced-motion: reduce)'
+            ).matches
+                ? null
+                : dropCounterLoader.animate(
+                    [
+                        { transform: 'rotate(0deg)' },
+                        { transform: 'rotate(360deg)' },
+                    ],
+                    {
+                        duration: 700,
+                        iterations: Infinity,
+                    }
+                );
+
+            dropCounterGroup.appendChild(dropCounterLabel);
+            dropCounterGroup.appendChild(dropCounter);
+            dropCounterGroup.appendChild(dropCounterLoader);
 
             const toggle = document.createElement('div');
 
@@ -1080,6 +1191,7 @@
             toggle.className = 'btnv6_blue_hoverfade btn_small';
             toggle.style.cssText = 'cursor:pointer; user-select:none;';
             toggle.setAttribute('role', 'button');
+            toggle.setAttribute('aria-pressed', 'false');
             toggle.tabIndex = 0;
 
             toggle.innerHTML = '<span>Show only drops remaining</span>';
@@ -1102,14 +1214,12 @@
             autoCraftLabel.textContent = 'Auto Craft All Badges';
             autoCraft.appendChild(autoCraftLabel);
 
-            statusGroup.appendChild(status);
             statusGroup.appendChild(craftStatus);
+            actionGroup.appendChild(dropCounterGroup);
             actionGroup.appendChild(toggle);
             actionGroup.appendChild(autoCraft);
             bar.appendChild(statusGroup);
             bar.appendChild(actionGroup);
-
-            container.insertBefore(bar, rows[0]);
 
             let active = false;
             let busy = false;
@@ -1167,11 +1277,79 @@
             function setActiveStyle(isActive) {
                 toggle.style.boxShadow =
                     isActive ? 'inset 0 0 0 1px #67c1f1' : '';
+                toggle.setAttribute('aria-pressed', String(isActive));
+            }
+
+            function finishDropCounterLoading(isComplete) {
+                dropCounterLoadingAnimation?.cancel();
+                dropCounterLoader.style.cssText =
+                    `display:inline-flex; width:10px; height:10px; align-items:center; justify-content:center; color:${isComplete ? '#a4d007' : '#d9a300'}; font-size:10px; font-weight:700; line-height:1;`;
+                dropCounterLoader.textContent = isComplete ? '\u2713' : '!';
+                dropCounterLoader.title = isComplete
+                    ? 'Scan complete'
+                    : 'Scan incomplete';
+                dropCounterGroup.setAttribute('aria-busy', 'false');
+            }
+
+            async function countGamesWithDropsRemaining() {
+                let count = 0;
+                let failedPages = 0;
+
+                for (let page = 1; page <= maxPage; page += 1) {
+                    const pageRows = await getPageRowsForDrops(page);
+
+                    if (pageRows === null) {
+                        failedPages += 1;
+                    } else {
+                        count += pageRows.filter(hasDropsRemaining).length;
+                    }
+
+                    const nextCount = String(count);
+
+                    if (dropCounter.textContent !== nextCount) {
+                        dropCounter.textContent = nextCount;
+                    }
+
+                    if (page < maxPage) {
+                        await sleep(100);
+                    }
+                }
+
+                const incomplete = (
+                    failedPages > 0 || detectedMaxPage > MAX_PAGES
+                );
+                const gameLabel = count === 1 ? 'game' : 'games';
+
+                dropCounter.textContent = incomplete
+                    ? `${count}+`
+                    : String(count);
+                dropCounter.setAttribute(
+                    'aria-label',
+                    incomplete
+                        ? `At least ${count} ${gameLabel} with card drops remaining`
+                        : `${count} ${gameLabel} with card drops remaining`
+                );
+
+                const notes = [];
+
+                if (failedPages) {
+                    notes.push(`${failedPages} page(s) could not be loaded`);
+                }
+
+                if (detectedMaxPage > MAX_PAGES) {
+                    notes.push(`count limited to ${MAX_PAGES} pages`);
+                }
+
+                dropCounter.title = notes.length
+                    ? `${notes.join('; ')}.`
+                    : 'Number of games with card drops remaining across all badge pages';
+                finishDropCounterLoading(!incomplete);
             }
 
             function resetDropFilter() {
                 active = false;
                 setActiveStyle(false);
+                badgeSearch.setFilterPaginationHidden(false);
 
                 getRows().forEach((row) => {
                     row.style.display = '';
@@ -1182,7 +1360,6 @@
                 });
 
                 extraRows = [];
-                status.textContent = '';
                 setBusy(false);
             }
 
@@ -1197,29 +1374,20 @@
                     row.style.display = hasDropsRemaining(row) ? '' : 'none';
                 });
 
-                const currentPage = getCurrentPageNumber();
-
                 setBusy(true);
-
-                // Bound the scan with Steam's pagination; empty or repeated
-                // responses are not reliable terminators.
-                const maxPage = Math.min(
-                    Math.max(
-                        currentPage,
-                        getMaxPageFromPagination() || 1
-                    ),
-                    MAX_PAGES
-                );
 
                 for (let page = 1; page <= maxPage && active; page += 1) {
                     if (page === currentPage) {
                         continue;
                     }
 
-                    status.textContent =
-                        `Loading page ${page} of ${maxPage}...`;
+                    const pageWasCached = pageRowsPromises.has(page);
 
-                    const rows = await fetchPageRowsWithRetry(page);
+                    const rows = await getPageRowsForDrops(page);
+
+                    if (!active) {
+                        break;
+                    }
 
                     if (rows === null) {
                         continue;
@@ -1238,20 +1406,29 @@
                             extraRows.push(clone);
                         });
 
-                    await sleep(200);
-                }
-
-                if (active) {
-                    const visibleCount = getRows()
-                        .filter((r) => r.style.display !== 'none')
-                        .length;
-
-                    status.textContent =
-                        `Showing ${visibleCount} games with drops remaining across all pages.`;
+                    if (!pageWasCached) {
+                        await sleep(200);
+                    }
                 }
 
                 setBusy(false);
             }
+
+            countGamesWithDropsRemaining()
+                .catch((err) => {
+                    console.error(
+                        'Steam Page Tools: failed counting games with card drops',
+                        err
+                    );
+                    dropCounter.textContent = '?';
+                    dropCounter.setAttribute(
+                        'aria-label',
+                        'Card-drop count unavailable'
+                    );
+                    dropCounter.title =
+                        'Reload the page to try counting again.';
+                    finishDropCounterLoading(false);
+                });
 
             async function onToggle() {
                 if (busy || craftBusy) {
@@ -1271,6 +1448,7 @@
 
                 active = true;
                 setActiveStyle(true);
+                badgeSearch.setFilterPaginationHidden(true);
                 await runFilter();
             }
 

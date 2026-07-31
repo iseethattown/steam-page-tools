@@ -7,6 +7,7 @@ All notable changes to the browser-extension edition are documented here.
 ### Added
 
 - Cross-page search for owned badges by game or badge name on every Steam profile badge page, ported from userscript version 1.10.1.
+- Automatic count of games with card drops remaining across all pages of the signed-in user's badge library.
 
 ### Changed
 
