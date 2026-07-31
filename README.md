@@ -113,8 +113,6 @@ Additional project documentation:
 - [CHANGELOG.md](CHANGELOG.md) — version history
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
 - [TESTING.md](TESTING.md) — verification status and release checklist
-- [RELEASING.md](RELEASING.md) — reproducible release process
-- [STORE_LISTING.md](STORE_LISTING.md) — browser-store disclosure copy
 
 The separately maintained [userscript edition](https://github.com/x0697x/steam-page-tools) is available for Violentmonkey and Tampermonkey.
 
