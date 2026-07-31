@@ -2,6 +2,16 @@
 
 All notable changes to the browser-extension edition are documented here.
 
+## Unreleased
+
+### Added
+
+- Cross-page search for owned badges by game or badge name on every Steam profile badge page, ported from userscript version 1.10.1.
+
+### Changed
+
+- Cross-page badge-search results are presented in one aggregated view; Steam's server-side pagination and page summary are hidden while a query is active and restored when it is cleared.
+
 ## 1.0.0 - 2026-07-29
 
 ### Added

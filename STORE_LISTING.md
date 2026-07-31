@@ -8,15 +8,15 @@ These drafts are not approved or published listings.
 
 **Name:** Steam Page Tools
 
-**Short summary:** Unofficial Steam badge filtering, safe bulk badge crafting, and bulk Store cart and wishlist tools for Chrome and Firefox.
+**Short summary:** Unofficial cross-page Steam badge search, filtering, safe bulk crafting, and bulk Store cart and wishlist tools.
 
 **Full description:**
 
-An unofficial Chrome and Firefox extension that adds badge filtering, safe bulk badge crafting, and bulk Steam Store cart and wishlist tools.
+An unofficial Chrome and Firefox extension that adds cross-page badge search, badge filtering, safe bulk badge crafting, and bulk Steam Store cart and wishlist tools.
 
 Steam Page Tools adds focused workflow controls to Steam Community badge pages and Steam Store search results.
 
-On your own badge pages, filter paginated results to games with card drops remaining or review and confirm a paced bulk-crafting queue. The crafting flow includes live status, reward rescans, cross-tab protection, stop controls, safety limits, and rate-limit/error handling.
+On every Steam profile badge page, search owned badges by game or badge name across all paginated results. Matches are collected into one clear result view while Steam's unrelated server-side pagination is hidden. On your own badge pages, filter paginated results to games with card drops remaining or review and confirm a paced bulk-crafting queue. The crafting flow includes live status, reward rescans, cross-tab protection, stop controls, safety limits, and rate-limit/error handling.
 
 On Steam Store search results, select individual games and add them to the cart or wishlist in a paced run. Wishlist actions refresh the account's current Steam wishlist first and automatically skip games already present. Bundle rows are not supported, and cart actions use Steam's first/default package.
 
@@ -70,7 +70,8 @@ The conservative taxonomy was rechecked against Mozilla's current definitions on
 
 Capture only accounts and content safe for public display. Redact usernames, account IDs, wallet balances, personalized recommendations, session values, and unrelated browser UI.
 
-- Own-profile badge page showing the filter and auto-craft controls.
+- Own-profile badge page showing the search, filter, and auto-craft controls.
+- Another profile's badge page showing only the badge search.
 - Filtered badge results with the status text visible.
 - Craft confirmation dialog using a non-sensitive demonstration account or staged mock; do not actually craft for the screenshot.
 - Craft queue status and stop control using staged/mock content.

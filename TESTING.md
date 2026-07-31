@@ -27,6 +27,14 @@ This document records completed verification and the scenarios that remain befor
 - [x] Scan a 24-page badge library with **Show only drops remaining** enabled and confirm the final count completes.
 - [x] Disable the filter and confirm all 150 original rows return with no hidden or cloned rows remaining.
 
+### Badge search
+
+- [ ] Confirm the search field appears exactly once on owned and non-owned profile badge pages.
+- [ ] Search by game name and badge name across a multi-page profile and confirm all matches appear in one result view.
+- [ ] Confirm the native page summary and navigation are hidden while a query is active, including while results are loading.
+- [ ] Clear with the input control and Escape; confirm the original rows and native pagination return exactly as rendered by Steam.
+- [ ] Confirm accented text, multiple search terms, zero matches, delayed badge artwork, a failed page fetch, and the 200-page safety limit behave as documented.
+
 ### Store selection
 
 - [x] Confirm 100 normal Store search rows receive exactly one selection control each.

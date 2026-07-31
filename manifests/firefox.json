@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Steam Page Tools",
   "version": "1.0.0",
-  "description": "Unofficial Steam badge filtering, safe bulk badge crafting, and bulk Store cart and wishlist tools for Chrome and Firefox.",
+  "description": "Unofficial cross-page Steam badge search, filtering, safe bulk crafting, and bulk Store cart and wishlist tools.",
   "homepage_url": "https://github.com/x0697x/steam-page-tools-extension",
   "icons": {
     "16": "assets/icons/icon-16.png",

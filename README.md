@@ -4,7 +4,7 @@
   <img src="assets/icon-source.png" width="160" alt="Steam Page Tools icon">
 </p>
 
-Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds focused badge-management and bulk Store actions directly to Steam.
+Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge search, focused badge-management, and bulk Store actions directly to Steam.
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
 
@@ -16,7 +16,11 @@ It is designed for people who manage large badge libraries, compare card-drop st
 
 ### Badge pages
 
-These tools are available only on the signed-in account's own badge pages.
+On every Steam Community profile badge page:
+
+- Search owned badges by game or badge name across every paginated result. Matching badges are collected into one view and Steam's original pagination is hidden until the search is cleared.
+
+On the signed-in user's own badge pages:
 
 - Show only games with card drops remaining across paginated badge results.
 - Auto-craft complete card sets across your badge pages, with confirmation, live progress, request pacing, rate-limit handling, cross-tab protection, safety limits, and a stop-after-current-request control.
@@ -24,7 +28,7 @@ These tools are available only on the signed-in account's own badge pages.
 > [!WARNING]
 > Auto-crafting consumes cards and cannot be undone. The extension asks for confirmation before crafting begins.
 
-<img src="https://i.ibb.co/pj09Cs4t/Screenshot-2026-07-28-173351.png" alt="Steam badge filter and auto-craft controls">
+<img src="https://i.ibb.co/SXL186Sk/image.png" alt="Steam badge">
 
 ### Steam Store search results
 

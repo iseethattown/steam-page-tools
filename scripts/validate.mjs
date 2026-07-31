@@ -19,8 +19,12 @@ import { inflateRawSync } from 'node:zlib';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const manifestDescription =
-    'Unofficial Steam badge filtering, safe bulk badge crafting, and bulk ' +
-    'Store cart and wishlist tools for Chrome and Firefox.';
+    'Unofficial cross-page Steam badge search, filtering, safe bulk ' +
+    'crafting, and bulk Store cart and wishlist tools.';
+const executableUrlAllowlist = new Set([
+    'https://steamcommunity.com',
+    'https://store.steampowered.com',
+]);
 const matches = [
     'https://steamcommunity.com/id/*/badges*',
     'https://steamcommunity.com/profiles/*/badges*',
@@ -247,6 +251,13 @@ async function validateContentSource() {
         'localStorage',
         'spt-badge-auto-craft-lock',
         'spt-search-cart-selection',
+        'spt-owned-badge-search',
+        'Search owned badges...',
+        "document.querySelectorAll('.profile_paging')",
+        'setPaginationHidden(true);',
+        'setPaginationHidden(false);',
+        'sptBadgeSearchClone',
+        'All matches are shown below.',
     ]) {
         assert.equal(
             source.includes(required),
@@ -259,10 +270,9 @@ async function validateContentSource() {
 
     for (const url of urls) {
         assert.equal(
-            url.startsWith('https://steamcommunity.com') ||
-                url.startsWith('https://store.steampowered.com'),
+            executableUrlAllowlist.has(url),
             true,
-            `Executable source contains a non-Steam URL: ${url}`
+            `Executable source contains an unapproved URL: ${url}`
         );
     }
 

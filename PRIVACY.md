@@ -8,7 +8,7 @@ Steam Page Tools has no telemetry, analytics, advertising, developer-operated da
 
 On supported Steam Community badge pages, the extension may read:
 
-- The current badge rows, badge names, app IDs, series and foil state, available crafting controls, card-drop status, pagination, and crafting responses.
+- Badge rows across the viewed profile's paginated results, badge and game names used for local search, app IDs, series and foil state, available crafting controls, card-drop status, pagination, and crafting responses.
 - The viewed profile URL and Steam-provided signed-in account identifiers used to decide whether the page belongs to the signed-in user.
 - The Steam session identifier exposed by the page or the Steam `sessionid` cookie when the user requests an account-changing action.
 
