@@ -29,7 +29,7 @@ On the signed-in user's own badge pages:
 > [!WARNING]
 > Auto-crafting consumes cards and cannot be undone. The extension asks for confirmation before crafting begins.
 
-<img src="https://i.ibb.co/GfgVPK3L/image.png" alt="Steam badge">
+<img src="https://i.ibb.co/v6NzND7w/Screenshot-2026-08-02-140336.png" alt="Steam badge">
 
 ### Steam Store search results
 
