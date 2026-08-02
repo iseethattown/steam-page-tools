@@ -257,6 +257,9 @@ async function validateContentSource() {
         'setPaginationHidden(true);',
         'setPaginationHidden(false);',
         'sptBadgeSearchClone',
+        'notifyBadgeIndexProgress',
+        'appendMatchingBadges',
+        'so far. Loading page',
         'All matches are shown below.',
     ]) {
         assert.equal(

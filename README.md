@@ -18,7 +18,7 @@ It is designed for people who manage large badge libraries, compare card-drop st
 
 On every Steam Community profile badge page:
 
-- Search owned badges by game or badge name across every paginated result. Matching badges are collected into one view and Steam's original pagination is hidden until the search is cleared.
+- Search owned badges by game or badge name across every paginated result. Matching badges appear progressively as each source page is scanned, and Steam's original pagination is hidden until the search is cleared.
 
 On the signed-in user's own badge pages:
 

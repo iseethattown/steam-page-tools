@@ -39,6 +39,7 @@ This document records completed verification and the scenarios that remain befor
 - [ ] Confirm the search field appears exactly once on owned and non-owned profile badge pages.
 - [ ] Confirm badge-search loading and result status stays directly below the search field without moving or wrapping the badge action controls.
 - [ ] Search by game name and badge name across a multi-page profile and confirm all matches appear in one result view.
+- [ ] Confirm matches appear progressively after each source page loads, remain in page order without duplicates, and finish with the correct total.
 - [ ] Confirm the native page summary and navigation are hidden while a query is active, including while results are loading.
 - [ ] Confirm Steam's navigation remains hidden after aggregated results render, including if its pager markup or inline display style is refreshed.
 - [ ] Clear with the input control and Escape; confirm the original rows and native pagination return exactly as rendered by Steam.
