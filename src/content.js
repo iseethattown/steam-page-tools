@@ -100,6 +100,18 @@
                 .trim();
         }
 
+        function createBadgeSearchTermPattern(term) {
+            const escapedTerm = term.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                '\\$&'
+            );
+
+            return new RegExp(
+                `(?:^|[^\\p{L}\\p{N}])${escapedTerm}`,
+                'u'
+            );
+        }
+
         // A badge_info_title is rendered only when this profile owns the
         // badge. Index both its badge name and the parent game/event title.
         function getOwnedBadgeSearchText(row) {
@@ -954,9 +966,12 @@
 
             function renderResults(index, rawQuery) {
                 const query = normalizeBadgeSearchText(rawQuery);
-                const terms = query.split(' ').filter(Boolean);
+                const termPatterns = query
+                    .split(' ')
+                    .filter(Boolean)
+                    .map(createBadgeSearchTermPattern);
                 const matches = index.badges.filter(({ text }) => (
-                    terms.every((term) => text.includes(term))
+                    termPatterns.every((pattern) => pattern.test(text))
                 ));
 
                 removeResultClones();
