@@ -786,7 +786,7 @@
             input.spellcheck = false;
             input.maxLength = 100;
             input.style.cssText =
-                'width:100%; height:32px; box-sizing:border-box; padding:0 10px; border:1px solid #000; border-radius:3px; background:#2a3f5a; color:#fff; font-family:"Motiva Sans",Arial,sans-serif; font-size:14px; box-shadow:1px 1px 0 rgba(255,255,255,.1);';
+                'width:100%; height:22px; box-sizing:border-box; padding:0 8px; border:1px solid #000; border-radius:3px; background:#2a3f5a; color:#fff; font-family:"Motiva Sans",Arial,sans-serif; font-size:12px; box-shadow:1px 1px 0 rgba(255,255,255,.1);';
 
             const searchStatus = document.createElement('span');
 
@@ -1266,12 +1266,12 @@
 
             actionGroup.id = 'spt-badge-actions';
             actionGroup.style.cssText =
-                'display:flex; align-items:center; gap:3px; flex:0 0 auto; margin-top:5px; margin-left:auto;';
+                'display:flex; align-items:center; gap:3px; flex:0 0 auto; margin-left:auto;';
 
             const statusGroup = document.createElement('div');
 
             statusGroup.style.cssText =
-                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:0 1 auto; min-width:0; margin-top:5px; flex-wrap:wrap;';
+                'display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:0 1 auto; min-width:0; flex-wrap:wrap;';
 
             const dropCounterGroup = document.createElement('span');
 

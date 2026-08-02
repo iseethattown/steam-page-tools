@@ -24,7 +24,7 @@ This document records completed verification and the scenarios that remain befor
 ### Badge filtering
 
 - [x] Confirm both owned-profile badge controls appear exactly once.
-- [ ] Confirm the search field and owned-profile badge controls share one aligned toolbar at desktop widths and wrap cleanly on narrow pages.
+- [ ] Confirm the compact search input and owned-profile badge controls use the same control height, share one aligned toolbar at desktop widths, and wrap cleanly on narrow pages.
 - [ ] Confirm the card-drop counter automatically reports the number of games with drops remaining across every badge page.
 - [ ] Confirm the counter stays beside the filter button, shows a compact spinner without shifting the layout, and grows numerically without flashing a progress message; confirm the spinner becomes a check after a complete scan or a warning mark alongside `N+` after an incomplete scan.
 - [ ] Confirm enabling the drop filter immediately shows current and cached matches, progressively adds later matches from the shared counter scan, and does not repeat successful page requests.
