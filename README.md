@@ -92,8 +92,6 @@ The project includes deterministic packaging, manifest and permission validation
 
 Authenticated, non-destructive Chrome scenarios have been exercised against live Steam pages. Firefox smoke testing and account-changing mutation scenarios remain part of the release checklist.
 
-See [TESTING.md](TESTING.md) for the verified behavior and remaining release tests.
-
 ## Source and development
 
 The Chrome and Firefox packages are built from the same readable source file. The build uses Node.js built-ins for staging and ZIP creation and does not download or generate runtime code.
