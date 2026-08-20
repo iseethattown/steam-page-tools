@@ -6,8 +6,9 @@ Steam Page Tools has no telemetry, analytics, advertising, developer-operated da
 
 ## Data read on Steam pages
 
-On supported Steam Community badge pages, the extension may read:
+On supported Steam Community profile and badge pages, the extension may read:
 
+- The viewed profile's numeric Steam account ID used to construct a user-activated SteamSets profile link.
 - Badge rows across the viewed profile's paginated results, badge and game names used for local search, app IDs, series and foil state, available crafting controls, card-drop status, pagination, and crafting responses.
 - The viewed profile URL and Steam-provided signed-in account identifiers used to decide whether the page belongs to the signed-in user.
 - The Steam session identifier exposed by the page or the Steam `sessionid` cookie when the user requests an account-changing action.
@@ -32,7 +33,7 @@ Steam session identifiers and action parameters are sent only to Steam to carry 
 
 The extension also sends the Steam account ID, country code, Steam Store origin, and a cache-busting value to Steam's dynamic-store endpoint to refresh the current wishlist before a bulk wishlist run.
 
-No information is sent to the project developer or to any non-Steam service.
+No information is sent automatically to the project developer or to any non-Steam service. If the user activates a SteamSets shortcut, the browser opens SteamSets in a new tab. The profile shortcut includes the viewed numeric Steam account ID in the destination URL; both SteamSets shortcuts use a no-referrer policy.
 
 ## Local storage and retention
 

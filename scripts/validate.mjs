@@ -19,15 +19,17 @@ import { inflateRawSync } from 'node:zlib';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const manifestDescription =
-    'Unofficial cross-page Steam badge search, filtering, safe bulk ' +
-    'crafting, and bulk Store cart and wishlist tools.';
+    'Unofficial Steam profile links, cross-page badge search, filtering, ' +
+    'safe bulk crafting, and bulk Store tools.';
 const executableUrlAllowlist = new Set([
     'https://steamcommunity.com',
     'https://store.steampowered.com',
+    'https://steamsets.com',
+    'https://beta.steamsets.com/badges/search',
 ]);
 const matches = [
-    'https://steamcommunity.com/id/*/badges*',
-    'https://steamcommunity.com/profiles/*/badges*',
+    'https://steamcommunity.com/id/*',
+    'https://steamcommunity.com/profiles/*',
     'https://store.steampowered.com/search*',
 ];
 const icons = {
@@ -249,6 +251,10 @@ async function validateContentSource() {
         "credentials: 'include'",
         'document.cookie',
         'localStorage',
+        "const STEAMSETS_PROFILE_ORIGIN = 'https://steamsets.com';",
+        "'https://beta.steamsets.com/badges/search'",
+        'spt-steamsets-profile',
+        'spt-steamsets-promo',
         'spt-badge-auto-craft-lock',
         'spt-search-cart-selection',
         'spt-owned-badge-search',

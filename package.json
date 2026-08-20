@@ -2,7 +2,7 @@
   "name": "steam-page-tools-extension",
   "version": "1.0.0",
   "private": true,
-  "description": "An unofficial Chrome and Firefox extension with cross-page badge search, badge filtering, safe bulk crafting, and bulk Steam Store tools.",
+  "description": "An unofficial Chrome and Firefox extension with Steam profile links, cross-page badge tools, and bulk Steam Store tools.",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {

@@ -4,7 +4,7 @@
   <img src="assets/icon-source.png" width="160" alt="Steam Page Tools icon">
 </p>
 
-Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge search, focused badge-management, and bulk Store actions directly to Steam.
+Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds SteamSets profile links, cross-page badge tools, and bulk Store actions directly to Steam.
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
 
@@ -14,11 +14,18 @@ It is designed for people who manage large badge libraries, compare card-drop st
 
 ## Features
 
+### Steam Community profiles
+
+On Steam profile pages:
+
+- Open the viewed account on SteamSets in a new tab from the profile action bar. The link is generated locally from Steam's numeric account ID and uses a no-referrer policy.
+
 ### Badge pages
 
 On every Steam Community profile badge page:
 
 - Search owned badges by game or badge name across every paginated result. Matching badges appear progressively as each source page is scanned, and Steam's original pagination is hidden until the search is cleared.
+- Open the SteamSets badge-search page in a new tab from the badge toolbar.
 
 On the signed-in user's own badge pages:
 
@@ -46,8 +53,8 @@ Bundle rows are not supported. When a game has multiple purchase options, the ca
 The extension is limited to these Steam page patterns:
 
 ```text
-https://steamcommunity.com/id/*/badges*
-https://steamcommunity.com/profiles/*/badges*
+https://steamcommunity.com/id/*
+https://steamcommunity.com/profiles/*
 https://store.steampowered.com/search*
 ```
 
@@ -66,6 +73,7 @@ Account-changing actions use Steam's existing signed-in session and are sent onl
 
 - Community requests are restricted to `https://steamcommunity.com`.
 - Store requests are restricted to `https://store.steampowered.com`.
+- SteamSets links open only after a user activates them, use `noopener noreferrer`, and do not load remote code or assets into Steam pages.
 - Constructed profile, game-card, redirect, and mutation URLs are rejected if they leave the expected Steam origin.
 - Crafting uses confirmation, request pacing, rate-limit handling, fresh-state reconciliation, batch limits, and a short-lived cross-tab lock.
 - Failed or rate-limited Store items remain selected when possible so they can be reviewed or retried.

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Steam Page Tools",
   "version": "1.0.0",
-  "description": "Unofficial cross-page Steam badge search, filtering, safe bulk crafting, and bulk Store cart and wishlist tools.",
+  "description": "Unofficial Steam profile links, cross-page badge search, filtering, safe bulk crafting, and bulk Store tools.",
   "homepage_url": "https://github.com/x0697x/steam-page-tools-extension",
   "icons": {
     "16": "assets/icons/icon-16.png",
@@ -13,8 +13,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://steamcommunity.com/id/*/badges*",
-        "https://steamcommunity.com/profiles/*/badges*",
+        "https://steamcommunity.com/id/*",
+        "https://steamcommunity.com/profiles/*",
         "https://store.steampowered.com/search*"
       ],
       "js": [
