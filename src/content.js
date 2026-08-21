@@ -257,6 +257,7 @@
         }
 
         const COMMENT_DELAY_MS = 5 * 1000;
+        const FAILURE_DELAY_MS = 20 * 1000;
         const COOLDOWN_MIN_MS = 10 * 1000;
         const COOLDOWN_MAX_MS = 15 * 1000;
         const MAX_COOLDOWN_RETRIES = 3;
@@ -470,9 +471,6 @@
                     (COOLDOWN_MAX_MS - COOLDOWN_MIN_MS + 1)
                 )
             );
-            err.fatal =
-                !err.commentDisabled &&
-                (response.status === 401 || response.status === 403);
             throw err;
         }
 
@@ -756,6 +754,7 @@
                         const friend = friends[index];
                         let cooldownRetries = 0;
                         let handled = false;
+                        let failedRequest = false;
 
                         while (!stopRequested && !handled) {
                             setStatus(
@@ -813,13 +812,10 @@
                                     skipped += 1;
                                 } else {
                                     failed += 1;
+                                    failedRequest = true;
                                 }
 
                                 handled = true;
-
-                                if (err.fatal) {
-                                    stopRequested = true;
-                                }
                             }
                         }
 
@@ -834,8 +830,13 @@
                             index < friends.length - 1
                         ) {
                             await waitWithStatus(
-                                COMMENT_DELAY_MS,
-                                'Waiting before the next profile:'
+                                failedRequest
+                                    ? FAILURE_DELAY_MS
+                                    : COMMENT_DELAY_MS,
+                                failedRequest
+                                    ? `Failed on ${friend.name}. ` +
+                                        'Continuing with the next profile in'
+                                    : 'Waiting before the next profile:'
                             );
                         }
                     }
