@@ -242,9 +242,820 @@
     if (location.origin === STEAM_COMMUNITY_ORIGIN) {
         initSteamProfileTools();
         initBadgesPageTools();
+        initFriendsPageTools();
     } else if (location.origin === STEAM_STORE_ORIGIN) {
         initSearchBulkCart();
     }
+
+    // Friends page tools.
+    function initFriendsPageTools() {
+        if (
+            !/^\/(?:my\/friends|id\/[^/]+\/friends|profiles\/\d+\/friends)\/?$/i
+                .test(location.pathname)
+        ) {
+            return;
+        }
+
+        const COMMENT_DELAY_MS = 5 * 1000;
+        const COOLDOWN_MIN_MS = 10 * 1000;
+        const COOLDOWN_MAX_MS = 15 * 1000;
+        const MAX_COOLDOWN_RETRIES = 3;
+        const COMMENT_LOCK_KEY = 'spt-friends-comment-lock';
+        const COMMENT_LOCK_TTL_MS = 30 * 1000;
+        const lockOwner =
+            `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        let lockHeartbeat = null;
+        let stopRequested = false;
+
+        injectFriendsCommentStyles();
+
+        let scanAttempts = 0;
+        const scanInterval = setInterval(() => {
+            scanAttempts += 1;
+
+            const titleBar = document.querySelector(
+                '.profile_friends.title_bar'
+            );
+
+            if (titleBar) {
+                addFriendsCommentButton(titleBar);
+                clearInterval(scanInterval);
+            } else if (scanAttempts >= 40) {
+                clearInterval(scanInterval);
+            }
+        }, 250);
+
+        function getFriends() {
+            const friends = new Map();
+
+            document
+                .querySelectorAll('.friend_block_v2[data-steamid]')
+                .forEach((row) => {
+                    const steamid = row.dataset.steamid;
+
+                    if (!/^\d{17}$/.test(steamid || '')) {
+                        return;
+                    }
+
+                    const nameElement = row.querySelector(
+                        '.friend_block_content'
+                    );
+                    const nameNode = nameElement
+                        ? [...nameElement.childNodes].find(
+                            (node) => node.nodeType === 3 &&
+                                node.textContent.trim()
+                        )
+                        : null;
+                    const name = nameNode
+                        ? nameNode.textContent.trim()
+                        : `Steam ${steamid}`;
+
+                    friends.set(steamid, { steamid, name });
+                });
+
+            return [...friends.values()];
+        }
+
+        function readCommentLock() {
+            try {
+                return JSON.parse(
+                    localStorage.getItem(COMMENT_LOCK_KEY) || 'null'
+                );
+            } catch {
+                return null;
+            }
+        }
+
+        function writeCommentLock() {
+            try {
+                localStorage.setItem(
+                    COMMENT_LOCK_KEY,
+                    JSON.stringify({ owner: lockOwner, time: Date.now() })
+                );
+
+                return readCommentLock()?.owner === lockOwner;
+            } catch (err) {
+                console.error(
+                    'Steam Page Tools: failed to write friends comment lock',
+                    err
+                );
+                return false;
+            }
+        }
+
+        function acquireCommentLock() {
+            const lock = readCommentLock();
+
+            if (
+                lock &&
+                lock.owner !== lockOwner &&
+                Number.isFinite(lock.time) &&
+                Date.now() - lock.time < COMMENT_LOCK_TTL_MS
+            ) {
+                return false;
+            }
+
+            if (!writeCommentLock()) {
+                return false;
+            }
+
+            lockHeartbeat = setInterval(writeCommentLock, 10 * 1000);
+            return true;
+        }
+
+        function releaseCommentLock() {
+            if (lockHeartbeat !== null) {
+                clearInterval(lockHeartbeat);
+                lockHeartbeat = null;
+            }
+
+            try {
+                if (readCommentLock()?.owner === lockOwner) {
+                    localStorage.removeItem(COMMENT_LOCK_KEY);
+                }
+            } catch (err) {
+                console.warn(
+                    'Steam Page Tools: failed to release friends comment lock',
+                    err
+                );
+            }
+        }
+
+        function getRetryAfterMs(response) {
+            const value = response.headers.get('Retry-After');
+
+            if (!value) {
+                return 0;
+            }
+
+            const seconds = Number(value);
+
+            if (Number.isFinite(seconds) && seconds >= 0) {
+                return seconds * 1000;
+            }
+
+            const time = Date.parse(value);
+
+            return Number.isFinite(time)
+                ? Math.max(0, time - Date.now())
+                : 0;
+        }
+
+        function isCommentDisabledError(message) {
+            return /comments?.*(?:disabled|private|not\s+allowed|not\s+permitted)|(?:does\s+not|doesn't|do\s+not|don't).*allow.*comments?|settings?.*allow.*comments?|not\s+allowed\s+to\s+(?:add\s+)?comments?|permission.*comments?|comment\s+privileges?|blocked/i
+                .test(message);
+        }
+
+        function isCooldownError(response, message) {
+            return response.status === 429 || /too\s+many|rate[\s-]?limit|slow\s+down|too\s+(?:frequently|often)|try\s+again\s+(?:in|later)|temporarily|cooldown/i
+                .test(message);
+        }
+
+        async function postProfileComment(friend, comment, sessionid) {
+            const postUrl = requirePinnedSteamUrl(
+                `/comment/Profile/post/${friend.steamid}/-1/`,
+                STEAM_COMMUNITY_ORIGIN
+            );
+
+            // Ask Steam for stable English error strings so cooldown and
+            // privacy-setting responses can be classified on any locale.
+            postUrl.searchParams.set('l', 'english');
+
+            const body = new URLSearchParams({
+                comment,
+                count: '6',
+                sessionid,
+                feature2: '-1',
+            });
+            const response = await fetch(postUrl, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Accept: 'application/json',
+                },
+                body: body.toString(),
+            });
+
+            requirePinnedSteamResponseUrl(
+                response,
+                STEAM_COMMUNITY_ORIGIN,
+                postUrl
+            );
+
+            let result = null;
+
+            try {
+                result = await response.json();
+            } catch {
+                // Steam can return an HTML error page for expired sessions.
+            }
+
+            if (response.ok && result?.success) {
+                return;
+            }
+
+            const message = String(
+                result?.error || `Steam returned HTTP ${response.status}`
+            ).trim();
+            const err = new Error(message);
+
+            err.commentDisabled = isCommentDisabledError(message);
+            err.cooldown =
+                !err.commentDisabled && isCooldownError(response, message);
+            err.cooldownMs = Math.max(
+                getRetryAfterMs(response),
+                COOLDOWN_MIN_MS + Math.floor(
+                    Math.random() *
+                    (COOLDOWN_MAX_MS - COOLDOWN_MIN_MS + 1)
+                )
+            );
+            err.fatal =
+                !err.commentDisabled &&
+                (response.status === 401 || response.status === 403);
+            throw err;
+        }
+
+        function addFriendsCommentButton(titleBar) {
+            if (document.querySelector('#spt-friends-comment-button')) {
+                return;
+            }
+
+            const button = document.createElement('button');
+
+            button.id = 'spt-friends-comment-button';
+            button.type = 'button';
+            button.className =
+                'profile_friends manage_link ' +
+                'btnv6_blue_hoverfade btn_medium';
+
+            const label = document.createElement('span');
+
+            label.textContent = 'Comment all friends';
+            button.appendChild(label);
+            button.addEventListener('click', openFriendsCommentDialog);
+
+            const addButton = titleBar.querySelector('#add_friends_button');
+
+            titleBar.insertBefore(button, addButton || null);
+        }
+
+        function openFriendsCommentDialog() {
+            if (document.querySelector('#spt-friends-comment-overlay')) {
+                return;
+            }
+
+            const friends = getFriends();
+
+            if (!friends.length) {
+                window.alert(
+                    'Steam Page Tools could not find any friends on this page.'
+                );
+                return;
+            }
+
+            stopRequested = false;
+
+            const overlay = document.createElement('div');
+
+            overlay.id = 'spt-friends-comment-overlay';
+
+            const dialog = document.createElement('div');
+
+            dialog.id = 'spt-friends-comment-dialog';
+            dialog.setAttribute('role', 'dialog');
+            dialog.setAttribute('aria-modal', 'true');
+            dialog.setAttribute('aria-labelledby', 'spt-friends-comment-title');
+
+            const header = document.createElement('div');
+
+            header.className = 'spt-friends-comment-header';
+
+            const title = document.createElement('div');
+
+            title.id = 'spt-friends-comment-title';
+            title.textContent = 'Post a comment to all friends';
+
+            const closeButton = document.createElement('button');
+
+            closeButton.type = 'button';
+            closeButton.className = 'spt-friends-comment-close';
+            closeButton.textContent = '\u00d7';
+            closeButton.title = 'Close';
+            closeButton.setAttribute('aria-label', 'Close');
+
+            header.appendChild(title);
+            header.appendChild(closeButton);
+
+            const content = document.createElement('div');
+
+            content.className = 'spt-friends-comment-content';
+
+            const description = document.createElement('p');
+
+            description.textContent =
+                `The same public profile comment will be posted to ` +
+                `${friends.length} friend(s), one at a time.`;
+
+            const pace = document.createElement('p');
+
+            pace.className = 'spt-friends-comment-note';
+            pace.textContent =
+                'There is a 5-second delay between comments. Profiles that ' +
+                'do not accept comments are skipped automatically.';
+
+            const textarea = document.createElement('textarea');
+
+            textarea.id = 'spt-friends-comment-text';
+            textarea.className = 'commentthread_textarea';
+            textarea.rows = 5;
+            textarea.maxLength = 1000;
+            textarea.placeholder = 'Enter the profile comment to post';
+            textarea.setAttribute('aria-label', 'Profile comment');
+
+            const characterCount = document.createElement('div');
+
+            characterCount.className = 'spt-friends-character-count';
+            characterCount.textContent = '0 / 1000';
+
+            const progress = document.createElement('div');
+
+            progress.className = 'spt-friends-progress';
+            progress.hidden = true;
+
+            const progressTrack = document.createElement('div');
+
+            progressTrack.className = 'spt-friends-progress-track';
+
+            const progressFill = document.createElement('div');
+
+            progressFill.className = 'spt-friends-progress-fill';
+            progressTrack.appendChild(progressFill);
+
+            const counters = document.createElement('div');
+
+            counters.className = 'spt-friends-counters';
+
+            const status = document.createElement('div');
+
+            status.className = 'spt-friends-comment-status';
+            status.setAttribute('role', 'status');
+            status.setAttribute('aria-live', 'polite');
+
+            progress.appendChild(progressTrack);
+            progress.appendChild(counters);
+            progress.appendChild(status);
+
+            const actions = document.createElement('div');
+
+            actions.className = 'spt-friends-comment-actions';
+
+            const cancelButton = makeDialogButton('Cancel', false);
+            const startButton = makeDialogButton('Start posting', true);
+            const stopButton = makeDialogButton('Stop after current', false);
+
+            stopButton.hidden = true;
+            actions.appendChild(cancelButton);
+            actions.appendChild(stopButton);
+            actions.appendChild(startButton);
+
+            content.appendChild(description);
+            content.appendChild(pace);
+            content.appendChild(textarea);
+            content.appendChild(characterCount);
+            content.appendChild(progress);
+            content.appendChild(actions);
+            dialog.appendChild(header);
+            dialog.appendChild(content);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            let running = false;
+
+            function makeDialogButton(text, primary) {
+                const button = document.createElement('button');
+
+                button.type = 'button';
+                button.className = primary
+                    ? 'btnv6_blue_hoverfade btn_medium'
+                    : 'btn_grey_white_innerfade btn_medium';
+
+                const label = document.createElement('span');
+
+                label.textContent = text;
+                button.appendChild(label);
+                return button;
+            }
+
+            function closeDialog() {
+                if (!running) {
+                    document.removeEventListener('keydown', onKeyDown);
+                    overlay.remove();
+                }
+            }
+
+            function onKeyDown(event) {
+                if (event.key !== 'Escape' || running) {
+                    return;
+                }
+
+                closeDialog();
+            }
+
+            function setStatus(text) {
+                status.textContent = text;
+            }
+
+            function setCounters(posted, skipped, failed) {
+                counters.textContent =
+                    `Posted: ${posted}  |  Skipped: ${skipped}  |  ` +
+                    `Failed: ${failed}`;
+            }
+
+            function setProgress(completed) {
+                const percentage = friends.length
+                    ? (completed / friends.length) * 100
+                    : 0;
+
+                progressFill.style.width = `${percentage}%`;
+            }
+
+            async function waitWithStatus(milliseconds, label) {
+                const endTime = Date.now() + milliseconds;
+
+                while (!stopRequested && Date.now() < endTime) {
+                    const seconds = Math.ceil(
+                        (endTime - Date.now()) / 1000
+                    );
+
+                    setStatus(`${label} ${seconds}s...`);
+                    await sleep(Math.min(1000, endTime - Date.now()));
+                }
+
+                return !stopRequested;
+            }
+
+            async function run() {
+                const comment = textarea.value.trim();
+
+                if (!comment) {
+                    setStatus('Enter a comment before starting.');
+                    textarea.focus();
+                    return;
+                }
+
+                const sessionid = getSessionId();
+
+                if (!sessionid) {
+                    setStatus(
+                        'Could not find your Steam session ID. Refresh the page and try again.'
+                    );
+                    return;
+                }
+
+                const confirmed = window.confirm(
+                    `Post this comment publicly to ${friends.length} ` +
+                    'friend profile(s)?\n\n' +
+                    'The run can take a long time. You can stop it after the ' +
+                    'current request, but comments already posted will remain.'
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                if (!acquireCommentLock()) {
+                    setStatus(
+                        'Another friends-comment run is already active in a Steam tab.'
+                    );
+                    return;
+                }
+
+                running = true;
+                textarea.disabled = true;
+                startButton.hidden = true;
+                cancelButton.hidden = true;
+                closeButton.disabled = true;
+                stopButton.hidden = false;
+                progress.hidden = false;
+
+                let posted = 0;
+                let skipped = 0;
+                let failed = 0;
+                let completed = 0;
+                let stoppedForCooldown = false;
+
+                setCounters(posted, skipped, failed);
+
+                try {
+                    for (let index = 0; index < friends.length; index += 1) {
+                        if (stopRequested) {
+                            break;
+                        }
+
+                        const friend = friends[index];
+                        let cooldownRetries = 0;
+                        let handled = false;
+
+                        while (!stopRequested && !handled) {
+                            setStatus(
+                                `Posting ${index + 1} of ${friends.length}: ` +
+                                `${friend.name}...`
+                            );
+
+                            try {
+                                await postProfileComment(
+                                    friend,
+                                    comment,
+                                    sessionid
+                                );
+                                posted += 1;
+                                handled = true;
+                            } catch (err) {
+                                console.error(
+                                    'Steam Page Tools: failed to post profile comment',
+                                    friend.steamid,
+                                    err
+                                );
+
+                                if (err.cooldown) {
+                                    cooldownRetries += 1;
+
+                                    if (
+                                        cooldownRetries >
+                                        MAX_COOLDOWN_RETRIES
+                                    ) {
+                                        stoppedForCooldown = true;
+                                        stopRequested = true;
+                                        break;
+                                    }
+
+                                    const cooldownSeconds = Math.ceil(
+                                        err.cooldownMs / 1000
+                                    );
+                                    const canContinue = await waitWithStatus(
+                                        err.cooldownMs,
+                                        `Steam requested a cooldown. Retrying ` +
+                                        `${friend.name} in`
+                                    );
+
+                                    if (!canContinue) {
+                                        break;
+                                    }
+
+                                    setStatus(
+                                        `Cooldown of ${cooldownSeconds}s finished.`
+                                    );
+                                    continue;
+                                }
+
+                                if (err.commentDisabled) {
+                                    skipped += 1;
+                                } else {
+                                    failed += 1;
+                                }
+
+                                handled = true;
+
+                                if (err.fatal) {
+                                    stopRequested = true;
+                                }
+                            }
+                        }
+
+                        if (handled) {
+                            completed += 1;
+                            setProgress(completed);
+                            setCounters(posted, skipped, failed);
+                        }
+
+                        if (
+                            !stopRequested &&
+                            index < friends.length - 1
+                        ) {
+                            await waitWithStatus(
+                                COMMENT_DELAY_MS,
+                                'Waiting before the next profile:'
+                            );
+                        }
+                    }
+
+                    if (stoppedForCooldown) {
+                        setStatus(
+                            'Stopped after Steam kept requesting a cooldown. ' +
+                            'Wait before starting a new run.'
+                        );
+                    } else if (stopRequested) {
+                        setStatus(
+                            `Stopped. ${posted} posted, ${skipped} skipped, ` +
+                            `${failed} failed.`
+                        );
+                    } else {
+                        setStatus(
+                            `Finished. ${posted} posted, ${skipped} skipped, ` +
+                            `${failed} failed.`
+                        );
+                    }
+                } finally {
+                    releaseCommentLock();
+                    running = false;
+                    stopButton.hidden = true;
+                    closeButton.disabled = false;
+                    cancelButton.hidden = false;
+                    cancelButton.querySelector('span').textContent = 'Close';
+                }
+            }
+
+            textarea.addEventListener('input', () => {
+                characterCount.textContent =
+                    `${textarea.value.length} / ${textarea.maxLength}`;
+            });
+            closeButton.addEventListener('click', closeDialog);
+            cancelButton.addEventListener('click', closeDialog);
+            startButton.addEventListener('click', run);
+            stopButton.addEventListener('click', () => {
+                stopRequested = true;
+                stopButton.disabled = true;
+                stopButton.querySelector('span').textContent = 'Stopping...';
+                setStatus('Stopping after the current request...');
+            });
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    closeDialog();
+                }
+            });
+            document.addEventListener('keydown', onKeyDown);
+
+            textarea.focus();
+        }
+
+        function injectFriendsCommentStyles() {
+            if (document.querySelector('#spt-friends-comment-styles')) {
+                return;
+            }
+
+            const style = document.createElement('style');
+
+            style.id = 'spt-friends-comment-styles';
+            style.textContent = `
+                #spt-friends-comment-button {
+                    flex: 0 0 auto;
+                    margin-right: 10px;
+                }
+
+                #spt-friends-comment-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 100000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
+                    background: rgba(0, 0, 0, 0.72);
+                    font-family: "Motiva Sans", Arial, sans-serif;
+                }
+
+                #spt-friends-comment-dialog {
+                    width: min(560px, calc(100vw - 32px));
+                    color: #d6d7d8;
+                    background: #171a21;
+                    border: 1px solid #2a475e;
+                    box-shadow: 0 0 18px #000000;
+                }
+
+                .spt-friends-comment-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    min-height: 48px;
+                    padding: 0 16px;
+                    color: #ffffff;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(42, 71, 94, 0.95),
+                        rgba(27, 40, 56, 0.95)
+                    );
+                    font-size: 20px;
+                    font-weight: 300;
+                }
+
+                .spt-friends-comment-close {
+                    border: 0;
+                    padding: 0 3px 5px;
+                    color: #8f98a0;
+                    background: transparent;
+                    cursor: pointer;
+                    font: 30px/1 Arial, sans-serif;
+                }
+
+                .spt-friends-comment-close:hover:not(:disabled) {
+                    color: #ffffff;
+                }
+
+                .spt-friends-comment-close:disabled {
+                    cursor: default;
+                    opacity: 0.4;
+                }
+
+                .spt-friends-comment-content {
+                    padding: 18px;
+                    font-size: 14px;
+                    line-height: 1.45;
+                }
+
+                .spt-friends-comment-content p {
+                    margin: 0 0 10px;
+                }
+
+                .spt-friends-comment-note {
+                    color: #8f98a0;
+                    font-size: 12px;
+                }
+
+                #spt-friends-comment-text {
+                    display: block;
+                    box-sizing: border-box;
+                    width: 100%;
+                    min-height: 110px;
+                    margin-top: 14px;
+                    padding: 10px;
+                    resize: vertical;
+                    overflow: auto;
+                    color: #d6d7d8;
+                    background: #222b35;
+                    border: 1px solid #000000;
+                    border-radius: 2px;
+                    box-shadow: inset 0 0 4px #000000;
+                    font: 14px/1.4 "Motiva Sans", Arial, sans-serif;
+                }
+
+                #spt-friends-comment-text:focus {
+                    border-color: #67c1f1;
+                    outline: 0;
+                }
+
+                #spt-friends-comment-text:disabled {
+                    opacity: 0.65;
+                }
+
+                .spt-friends-character-count {
+                    margin-top: 4px;
+                    color: #8f98a0;
+                    text-align: right;
+                    font-size: 11px;
+                }
+
+                .spt-friends-progress {
+                    margin-top: 14px;
+                }
+
+                .spt-friends-progress-track {
+                    height: 8px;
+                    overflow: hidden;
+                    background: #0e141b;
+                    border: 1px solid #000000;
+                }
+
+                .spt-friends-progress-fill {
+                    width: 0;
+                    height: 100%;
+                    background: linear-gradient(90deg, #1a9fff, #66c0f4);
+                    transition: width 0.2s ease;
+                }
+
+                .spt-friends-counters {
+                    margin-top: 8px;
+                    color: #8f98a0;
+                    font-size: 12px;
+                }
+
+                .spt-friends-comment-status {
+                    min-height: 38px;
+                    margin-top: 6px;
+                    color: #c7d5e0;
+                    font-size: 12px;
+                }
+
+                .spt-friends-comment-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                    margin-top: 16px;
+                }
+
+                .spt-friends-comment-actions button[hidden],
+                .spt-friends-progress[hidden] {
+                    display: none;
+                }
+            `;
+
+            document.head.appendChild(style);
+        }
+    }
+
+
 
     // Badge page tools.
     function initBadgesPageTools() {

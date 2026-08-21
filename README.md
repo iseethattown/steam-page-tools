@@ -4,7 +4,7 @@
   <img src="assets/icon-source.png" width="160" alt="Steam Page Tools icon">
 </p>
 
-Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds SteamSets profile links, cross-page badge tools, and bulk Store actions directly to Steam.
+Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds SteamSets profile links, cross-page badge tools, paced friends-page comments, and bulk Store actions directly to Steam.
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
 
@@ -38,6 +38,17 @@ On the signed-in user's own badge pages:
 
 <img src="https://i.ibb.co/v6NzND7w/Screenshot-2026-08-02-140336.png" alt="Steam badge">
 
+### Friends page
+
+On the signed-in user's friends page:
+
+- Open a Steam-styled dialog and review one comment before posting it to every friend profile.
+- Follow live posted, skipped, and failed counts, progress, and the current profile.
+- Wait five seconds between comments, skip profiles that do not allow comments, and retry bounded cooldown responses after a randomized 10-to-15-second delay (or Steam's longer `Retry-After` value).
+- Stop safely after the current request and prevent duplicate runs across Steam tabs.
+
+The extension asks for confirmation before a run begins. Comments already posted remain on the recipient profiles if a run is stopped.
+
 ### Steam Store search results
 
 - Select games directly from the search results.
@@ -53,6 +64,7 @@ Bundle rows are not supported. When a game has multiple purchase options, the ca
 The extension is limited to these Steam page patterns:
 
 ```text
+https://steamcommunity.com/my/friends*
 https://steamcommunity.com/id/*
 https://steamcommunity.com/profiles/*
 https://store.steampowered.com/search*
@@ -76,6 +88,7 @@ Account-changing actions use Steam's existing signed-in session and are sent onl
 - SteamSets links open only after a user activates them, use `noopener noreferrer`, and do not load remote code or assets into Steam pages.
 - Constructed profile, game-card, redirect, and mutation URLs are rejected if they leave the expected Steam origin.
 - Crafting uses confirmation, request pacing, rate-limit handling, fresh-state reconciliation, batch limits, and a short-lived cross-tab lock.
+- Friends-page commenting uses confirmation, five-second pacing, disabled-profile skips, bounded cooldown retries, a stop control, and a short-lived cross-tab lock.
 - Failed or rate-limited Store items remain selected when possible so they can be reviewed or retried.
 
 These safeguards reduce accidental or duplicate operations, but users should still review every destructive confirmation carefully.
@@ -90,7 +103,7 @@ Steam Page Tools has:
 - no developer-operated server; and
 - no developer collection or retention of Steam account data.
 
-The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Store selections and the short-lived crafting lock use storage owned by the corresponding Steam origin.
+The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Store selections and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
 
 See [PRIVACY.md](PRIVACY.md) for the complete disclosure.
 

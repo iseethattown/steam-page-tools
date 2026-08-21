@@ -10,6 +10,7 @@ All notable changes to the browser-extension edition are documented here.
 - A SteamSets badge-search shortcut alongside the extension's local cross-page badge search.
 - Cross-page search for owned badges by game or badge name on every Steam profile badge page, ported from userscript version 1.10.1.
 - Automatic count of games with card drops remaining across all pages of the signed-in user's badge library.
+- Steam-styled friends-page dialog for posting one reviewed comment to every friend profile, with confirmation, live progress, five-second pacing, disabled-profile skips, bounded cooldown retries, safe stopping, and cross-tab locking.
 
 ### Changed
 

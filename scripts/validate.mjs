@@ -19,15 +19,16 @@ import { inflateRawSync } from 'node:zlib';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const manifestDescription =
-    'Unofficial Steam profile links, cross-page badge search, filtering, ' +
-    'safe bulk crafting, and bulk Store tools.';
+    'Unofficial Steam profile links, badge search and crafting, ' +
+    'friends-page comments, and bulk Store cart and wishlist tools.';
 const executableUrlAllowlist = new Set([
     'https://steamcommunity.com',
     'https://store.steampowered.com',
-    'https://steamsets.com',
+    'https://beta.steamsets.com',
     'https://beta.steamsets.com/badges/search',
 ]);
 const matches = [
+    'https://steamcommunity.com/my/friends*',
     'https://steamcommunity.com/id/*',
     'https://steamcommunity.com/profiles/*',
     'https://store.steampowered.com/search*',
@@ -251,12 +252,18 @@ async function validateContentSource() {
         "credentials: 'include'",
         'document.cookie',
         'localStorage',
-        "const STEAMSETS_PROFILE_ORIGIN = 'https://steamsets.com';",
+        "const STEAMSETS_PROFILE_ORIGIN = 'https://beta.steamsets.com';",
         "'https://beta.steamsets.com/badges/search'",
         'spt-steamsets-profile',
         'spt-steamsets-promo',
         'spt-badge-auto-craft-lock',
+        'spt-friends-comment-lock',
         'spt-search-cart-selection',
+        'Comment all friends',
+        '/comment/Profile/post/',
+        'COMMENT_DELAY_MS = 5 * 1000',
+        'COOLDOWN_MIN_MS = 10 * 1000',
+        'COOLDOWN_MAX_MS = 15 * 1000',
         'spt-owned-badge-search',
         'Search owned badges...',
         "document.querySelectorAll('.profile_paging')",

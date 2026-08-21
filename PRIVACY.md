@@ -13,6 +13,13 @@ On supported Steam Community profile and badge pages, the extension may read:
 - The viewed profile URL and Steam-provided signed-in account identifiers used to decide whether the page belongs to the signed-in user.
 - The Steam session identifier exposed by the page or the Steam `sessionid` cookie when the user requests an account-changing action.
 
+On the signed-in user's supported Steam Community friends page, the extension may read:
+
+- Friend Steam IDs and display names rendered in the friends list so it can build the user-requested recipient queue and show progress.
+- The profile comment entered in the extension dialog. The comment is kept only in that page's memory for the active dialog and run.
+- Steam comment responses, including success, privacy-setting, cooldown, authentication, and network errors.
+- The Steam session identifier exposed by the page or the `sessionid` cookie when the user starts a comment run.
+
 On supported Steam Store search pages, the extension may read:
 
 - Search-result app IDs, names, purchase-package data, and the user's selected rows.
@@ -20,7 +27,7 @@ On supported Steam Store search pages, the extension may read:
 - The current Steam wishlist response and cart or wishlist action responses.
 - The Steam session identifier exposed by the page or the Steam `sessionid` cookie when the user requests an account-changing action.
 
-The extension does not read browsing history outside the three declared match patterns.
+The extension does not read browsing history outside its declared Steam match patterns.
 
 ## Data sent to Steam
 
@@ -29,7 +36,7 @@ All network requests are sent over HTTPS only to the relevant Steam origin:
 - Credential-bearing Steam Community requests are pinned to `https://steamcommunity.com`.
 - Steam Store requests are pinned to `https://store.steampowered.com`.
 
-Steam session identifiers and action parameters are sent only to Steam to carry out user-requested account operations. Examples include the app, badge series, foil state, level count, package ID, cart action, or wishlist app ID. Browser-managed Steam cookies may accompany same-origin requests through `credentials: "include"`.
+Steam session identifiers and action parameters are sent only to Steam to carry out user-requested account operations. Examples include a profile comment and recipient Steam ID, or the app, badge series, foil state, level count, package ID, cart action, or wishlist app ID. Browser-managed Steam cookies may accompany same-origin requests through `credentials: "include"`.
 
 The extension also sends the Steam account ID, country code, Steam Store origin, and a cache-busting value to Steam's dynamic-store endpoint to refresh the current wishlist before a bulk wishlist run.
 
@@ -42,6 +49,7 @@ The extension deliberately retains the existing Steam-origin storage behavior:
 - `spt-search-cart-selection` stores selected Steam app IDs and display names on `store.steampowered.com` until each item succeeds or the user clears the selection.
 - `dbf-search-cart-selection`, if present from an older script version, is migrated to the `spt-` key and removed when storage access permits.
 - `spt-badge-auto-craft-lock` coordinates crafting tabs on `steamcommunity.com`. Its lock expires after 60 seconds and is removed when a run ends normally.
+- `spt-friends-comment-lock` coordinates friends-comment runs across `steamcommunity.com` tabs. It contains only a random run owner and timestamp, expires after 30 seconds, and is removed when a run ends normally.
 - Steam's `unUserdataVersion` value is incremented to invalidate the Store's dynamic wishlist cache.
 - Steam's in-page dynamic-store wishlist object may be updated in memory after successful actions.
 
@@ -53,6 +61,8 @@ To delete retained selection or lock data, clear site data for the applicable St
 
 Badge crafting consumes trading cards and cannot be undone. Steam Page Tools asks for confirmation before crafting, but a confirmed run can craft multiple levels and can continue with badges made ready by crafting rewards.
 
+Friends-page comment runs publish the user's entered text to other Steam profiles. Steam Page Tools asks for confirmation, paces requests, and provides a stop control, but comments posted before a stop remain visible until they are removed through Steam.
+
 Cart and wishlist operations change the signed-in Steam account. Failed or rate-limited items remain selected when possible so the user can review or retry them.
 
 ## Firefox data classification
@@ -63,7 +73,7 @@ The Firefox manifest conservatively declares these data types as required becaus
 - `personallyIdentifyingInfo`: the Steam account ID identifies the account whose wishlist is refreshed.
 - `locationInfo`: Steam's country code is sent back to Steam for country-specific dynamic-store data.
 - `websiteContent`: page data, cookies/session data, links, app/package data, and Steam responses are processed and some are transmitted back to Steam.
-- `websiteActivity`: selected apps and requested cart, wishlist, and badge-crafting actions are sent to Steam.
+- `websiteActivity`: selected apps and requested cart, wishlist, badge-crafting, and profile-comment actions are sent to Steam.
 
 `none` is not declared. No `technicalAndInteraction` permission is requested because the extension has no analytics, usage metrics, crash reporting, or developer telemetry.
 
