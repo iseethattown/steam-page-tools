@@ -42,7 +42,7 @@ On the signed-in user's own badge pages:
 
 On the signed-in user's friends page:
 
-- Open a Steam-styled dialog, search the friends list, and choose exactly which profiles should receive the reviewed comment.
+- Open a Steam-styled dialog, search the friends list, and explicitly choose which profiles should receive the reviewed comment; no recipient is selected by default.
 - Follow live posted, skipped, and failed counts, progress, and the current profile.
 - Wait five seconds between comments, skip profiles that do not allow comments, wait 20 seconds after other failures before continuing, and retry bounded cooldown responses after a randomized 10-to-15-second delay (or Steam's longer `Retry-After` value).
 - Stop safely after the current request and prevent duplicate runs across Steam tabs.

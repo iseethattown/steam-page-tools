@@ -8,6 +8,10 @@ All notable changes to the browser-extension edition are documented here.
 
 - A searchable, Steam-styled friend selector for choosing the recipients of a bulk profile comment.
 
+### Changed
+
+- Friends now start unselected in the bulk-comment dialog so checking one friend cannot leave hidden recipients selected accidentally.
+
 ## 1.1.0 - 2026-08-21
 
 ### Added

@@ -568,9 +568,7 @@
                 'There is a 5-second delay between comments. Profiles that ' +
                 'do not accept comments are skipped automatically.';
 
-            const selectedSteamIds = new Set(
-                friends.map((friend) => friend.steamid)
-            );
+            const selectedSteamIds = new Set();
             const selector = document.createElement('section');
 
             selector.className = 'spt-friends-selector';
@@ -646,7 +644,7 @@
 
                 checkbox.type = 'checkbox';
                 checkbox.value = friend.steamid;
-                checkbox.checked = true;
+                checkbox.checked = false;
                 checkbox.setAttribute(
                     'aria-label',
                     `Post the comment to ${friend.name}`

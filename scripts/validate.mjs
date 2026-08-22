@@ -264,6 +264,8 @@ async function validateContentSource() {
         'Search friends...',
         'Select shown',
         'Clear shown',
+        'const selectedSteamIds = new Set();',
+        'checkbox.checked = false;',
         '/comment/Profile/post/',
         'COMMENT_DELAY_MS = 5 * 1000',
         'FAILURE_DELAY_MS = 20 * 1000',
