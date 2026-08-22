@@ -610,16 +610,8 @@
             friendSearch.spellcheck = false;
             friendSearch.setAttribute('aria-label', 'Search friends');
 
-            const selectShownButton = makeDialogButton(
-                'Select shown',
-                false,
-                true
-            );
-            const clearShownButton = makeDialogButton(
-                'Clear shown',
-                false,
-                true
-            );
+            const selectShownButton = makeSelectorButton('Select shown');
+            const clearShownButton = makeSelectorButton('Clear shown');
 
             selectShownButton.title =
                 'Select every friend matching the current search';
@@ -768,19 +760,27 @@
 
             let running = false;
 
-            function makeDialogButton(text, primary, compact = false) {
+            function makeDialogButton(text, primary) {
                 const button = document.createElement('button');
 
                 button.type = 'button';
                 button.className = primary
-                    ? 'btnv6_blue_hoverfade'
-                    : 'btn_grey_white_innerfade';
-                button.classList.add(compact ? 'btn_small' : 'btn_medium');
+                    ? 'btnv6_blue_hoverfade btn_medium'
+                    : 'btn_grey_white_innerfade btn_medium';
 
                 const label = document.createElement('span');
 
                 label.textContent = text;
                 button.appendChild(label);
+                return button;
+            }
+
+            function makeSelectorButton(text) {
+                const button = document.createElement('button');
+
+                button.type = 'button';
+                button.className = 'spt-friends-selector-button';
+                button.textContent = text;
                 return button;
             }
 
@@ -1281,8 +1281,51 @@
                     color: #6f7882;
                 }
 
-                .spt-friends-selector-controls button {
+                .spt-friends-selector-button {
+                    appearance: none;
+                    box-sizing: border-box;
+                    height: 28px;
+                    padding: 0 11px;
+                    color: #d6d7d8;
+                    background: linear-gradient(
+                        180deg,
+                        #3d4d5b 0%,
+                        #2b3945 100%
+                    );
+                    border: 1px solid #4b5f70;
+                    border-radius: 2px;
+                    box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+                    cursor: pointer;
+                    font: 12px/26px "Motiva Sans", Arial, sans-serif;
+                    text-align: center;
+                    text-shadow: 0 1px 1px #000000;
                     white-space: nowrap;
+                }
+
+                .spt-friends-selector-button:hover:not(:disabled) {
+                    color: #ffffff;
+                    background: linear-gradient(
+                        180deg,
+                        #4f6576 0%,
+                        #354958 100%
+                    );
+                    border-color: #67c1f1;
+                }
+
+                .spt-friends-selector-button:active:not(:disabled) {
+                    background: #293846;
+                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+                }
+
+                .spt-friends-selector-button:focus-visible {
+                    border-color: #ffffff;
+                    outline: 1px solid #67c1f1;
+                    outline-offset: 1px;
+                }
+
+                .spt-friends-selector-button:disabled {
+                    cursor: default;
+                    opacity: 0.5;
                 }
 
                 .spt-friends-selector-list {
@@ -1321,24 +1364,38 @@
                     width: 16px;
                     height: 16px;
                     margin: 0;
-                    background: #0e141b;
-                    border: 1px solid #4b667a;
+                    background: linear-gradient(180deg, #182633, #0e171f);
+                    border: 1px solid #496174;
                     border-radius: 2px;
+                    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
                     cursor: pointer;
+                    transition: border-color 0.1s, background 0.1s;
                 }
 
                 .spt-friends-selector-row input[type="checkbox"]::before {
-                    width: 9px;
-                    height: 9px;
-                    background: #66c0f4;
-                    box-shadow: 0 0 4px rgba(102, 192, 244, 0.55);
+                    width: 4px;
+                    height: 8px;
+                    border: solid #ffffff;
+                    border-width: 0 2px 2px 0;
                     content: "";
-                    transform: scale(0);
+                    transform: rotate(45deg) scale(0);
                     transition: transform 0.08s ease-in-out;
                 }
 
+                .spt-friends-selector-row input[type="checkbox"]:checked {
+                    background: linear-gradient(180deg, #67c1f1, #1a83b9);
+                    border-color: #8ed8ff;
+                    box-shadow:
+                        inset 0 1px rgba(255, 255, 255, 0.22),
+                        0 0 3px rgba(102, 192, 244, 0.35);
+                }
+
                 .spt-friends-selector-row input[type="checkbox"]:checked::before {
-                    transform: scale(1);
+                    transform: rotate(45deg) scale(1);
+                }
+
+                .spt-friends-selector-row input[type="checkbox"]:hover:not(:disabled) {
+                    border-color: #8ed8ff;
                 }
 
                 .spt-friends-selector-row input[type="checkbox"]:focus-visible {
