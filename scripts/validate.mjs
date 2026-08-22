@@ -88,7 +88,7 @@ async function readJson(relativePath) {
 function validateCommonManifest(manifest) {
     assert.equal(manifest.manifest_version, 3);
     assert.equal(manifest.name, 'Steam Page Tools');
-    assert.equal(manifest.version, '1.1.0');
+    assert.equal(manifest.version, '1.2.0');
     assert.equal(manifest.description, manifestDescription);
     assert.equal(
         [...manifest.description].length <= 132,
@@ -514,7 +514,7 @@ async function validateDistribution(browser) {
     const directory = resolve(repoRoot, `dist/${browser}`);
     const archive = resolve(
         repoRoot,
-        `dist/steam-page-tools-${browser}-v1.1.0.zip`
+        `dist/steam-page-tools-${browser}-v1.2.0.zip`
     );
     const manifestSource = resolve(repoRoot, `manifests/${browser}.json`);
 
@@ -567,11 +567,11 @@ async function validateBuildOutputsWhenPresent() {
         resolve(repoRoot, 'dist/firefox'),
         resolve(
             repoRoot,
-            'dist/steam-page-tools-chrome-v1.1.0.zip'
+            'dist/steam-page-tools-chrome-v1.2.0.zip'
         ),
         resolve(
             repoRoot,
-            'dist/steam-page-tools-firefox-v1.1.0.zip'
+            'dist/steam-page-tools-firefox-v1.2.0.zip'
         ),
     ];
     const present = await Promise.all(expected.map(exists));

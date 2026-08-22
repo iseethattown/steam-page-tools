@@ -8,7 +8,7 @@ Steam Page Tools is an unofficial browser extension for Chrome and Firefox that 
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
 
-> **Project status:** Version 1.1.0 is being prepared for its first Chrome Web Store and Firefox Add-ons submissions. Official store links will be added here after publication.
+> **Project status:** Version 1.2.0 is being prepared for its first Chrome Web Store and Firefox Add-ons submissions. Official store links will be added here after publication.
 
 > **Unofficial project:** Steam Page Tools is independent and is not affiliated with or endorsed by Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
 
