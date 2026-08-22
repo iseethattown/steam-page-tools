@@ -133,8 +133,6 @@ Additional project documentation:
 - [CHANGELOG.md](CHANGELOG.md) — version history
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
 
-The separately maintained [userscript edition](https://github.com/x0697x/steam-page-tools) is available for Violentmonkey and Tampermonkey.
-
 ## License
 
 Copyright (C) 2026 x0697x.

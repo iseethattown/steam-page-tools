@@ -97,7 +97,7 @@ function validateCommonManifest(manifest) {
     );
     assert.equal(
         manifest.homepage_url,
-        'https://github.com/x0697x/steam-page-tools-extension'
+        'https://github.com/ju6697/steam-page-tools'
     );
     assertDeepEqual(manifest.icons, icons, 'Unexpected icon declaration');
     assertDeepEqual(

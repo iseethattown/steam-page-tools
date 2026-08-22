@@ -14,6 +14,7 @@ All notable changes to the browser-extension edition are documented here.
 
 ### Changed
 
+- Renamed the repository and package slug from `steam-page-tools-extension` to `steam-page-tools`.
 - Cross-page badge-search results are presented in one aggregated view; Steam's server-side pagination and page summary are hidden while a query is active and restored when it is cleared.
 - Matching badge-search results appear progressively as each source page finishes loading instead of waiting for the complete badge index.
 - Badge-search loading and result status appears directly below the search field so it cannot displace the badge action controls.

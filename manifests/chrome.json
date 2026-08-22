@@ -3,7 +3,7 @@
   "name": "Steam Page Tools",
   "version": "1.1.0",
   "description": "Unofficial Steam profile links, badge search and crafting, friends-page comments, and bulk Store cart and wishlist tools.",
-  "homepage_url": "https://github.com/x0697x/steam-page-tools-extension",
+  "homepage_url": "https://github.com/ju6697/steam-page-tools",
   "minimum_chrome_version": "111",
   "icons": {
     "16": "assets/icons/icon-16.png",
