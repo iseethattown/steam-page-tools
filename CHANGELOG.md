@@ -2,6 +2,12 @@
 
 All notable changes to the browser-extension edition are documented here.
 
+## Unreleased
+
+### Added
+
+- A searchable, Steam-styled friend selector for choosing the recipients of a bulk profile comment.
+
 ## 1.1.0 - 2026-08-21
 
 ### Added

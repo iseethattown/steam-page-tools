@@ -42,7 +42,7 @@ On the signed-in user's own badge pages:
 
 On the signed-in user's friends page:
 
-- Open a Steam-styled dialog and review one comment before posting it to every friend profile.
+- Open a Steam-styled dialog, search the friends list, and choose exactly which profiles should receive the reviewed comment.
 - Follow live posted, skipped, and failed counts, progress, and the current profile.
 - Wait five seconds between comments, skip profiles that do not allow comments, wait 20 seconds after other failures before continuing, and retry bounded cooldown responses after a randomized 10-to-15-second delay (or Steam's longer `Retry-After` value).
 - Stop safely after the current request and prevent duplicate runs across Steam tabs.
@@ -88,7 +88,7 @@ Account-changing actions use Steam's existing signed-in session and are sent onl
 - SteamSets links open only after a user activates them, use `noopener noreferrer`, and do not load remote code or assets into Steam pages.
 - Constructed profile, game-card, redirect, and mutation URLs are rejected if they leave the expected Steam origin.
 - Crafting uses confirmation, request pacing, rate-limit handling, fresh-state reconciliation, batch limits, and a short-lived cross-tab lock.
-- Friends-page commenting uses confirmation, five-second pacing, disabled-profile skips, 20-second failure recovery, bounded cooldown retries, a stop control, and a short-lived cross-tab lock.
+- Friends-page commenting uses an explicit recipient selector, confirmation, five-second pacing, disabled-profile skips, 20-second failure recovery, bounded cooldown retries, a stop control, and a short-lived cross-tab lock.
 - Failed or rate-limited Store items remain selected when possible so they can be reviewed or retried.
 
 These safeguards reduce accidental or duplicate operations, but users should still review every destructive confirmation carefully.

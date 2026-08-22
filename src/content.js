@@ -310,8 +310,18 @@
                     const name = nameNode
                         ? nameNode.textContent.trim()
                         : `Steam ${steamid}`;
+                    const avatarElement = row.querySelector(
+                        '.player_avatar img'
+                    );
+                    const avatarUrl = avatarElement
+                        ? String(
+                            avatarElement.currentSrc ||
+                            avatarElement.getAttribute('src') ||
+                            ''
+                        )
+                        : '';
 
-                    friends.set(steamid, { steamid, name });
+                    friends.set(steamid, { steamid, name, avatarUrl });
                 });
 
             return [...friends.values()];
@@ -489,7 +499,7 @@
 
             const label = document.createElement('span');
 
-            label.textContent = 'Comment all friends';
+            label.textContent = 'Comment friends';
             button.appendChild(label);
             button.addEventListener('click', openFriendsCommentDialog);
 
@@ -532,7 +542,7 @@
             const title = document.createElement('div');
 
             title.id = 'spt-friends-comment-title';
-            title.textContent = 'Post a comment to all friends';
+            title.textContent = 'Post a comment to friends';
 
             const closeButton = document.createElement('button');
 
@@ -551,16 +561,143 @@
 
             const description = document.createElement('p');
 
-            description.textContent =
-                `The same public profile comment will be posted to ` +
-                `${friends.length} friend(s), one at a time.`;
-
             const pace = document.createElement('p');
 
             pace.className = 'spt-friends-comment-note';
             pace.textContent =
                 'There is a 5-second delay between comments. Profiles that ' +
                 'do not accept comments are skipped automatically.';
+
+            const selectedSteamIds = new Set(
+                friends.map((friend) => friend.steamid)
+            );
+            const selector = document.createElement('section');
+
+            selector.className = 'spt-friends-selector';
+            selector.setAttribute(
+                'aria-labelledby',
+                'spt-friends-selector-title'
+            );
+
+            const selectorHeader = document.createElement('div');
+
+            selectorHeader.className = 'spt-friends-selector-header';
+
+            const selectorTitle = document.createElement('div');
+
+            selectorTitle.id = 'spt-friends-selector-title';
+            selectorTitle.className = 'spt-friends-selector-title';
+            selectorTitle.textContent = 'Choose friends';
+
+            const selectionCount = document.createElement('div');
+
+            selectionCount.className = 'spt-friends-selection-count';
+            selectionCount.setAttribute('aria-live', 'polite');
+
+            selectorHeader.appendChild(selectorTitle);
+            selectorHeader.appendChild(selectionCount);
+
+            const selectorControls = document.createElement('div');
+
+            selectorControls.className = 'spt-friends-selector-controls';
+
+            const friendSearch = document.createElement('input');
+
+            friendSearch.type = 'search';
+            friendSearch.className = 'spt-friends-search';
+            friendSearch.placeholder = 'Search friends...';
+            friendSearch.autocomplete = 'off';
+            friendSearch.spellcheck = false;
+            friendSearch.setAttribute('aria-label', 'Search friends');
+
+            const selectShownButton = makeDialogButton(
+                'Select shown',
+                false,
+                true
+            );
+            const clearShownButton = makeDialogButton(
+                'Clear shown',
+                false,
+                true
+            );
+
+            selectShownButton.title =
+                'Select every friend matching the current search';
+            clearShownButton.title =
+                'Clear every friend matching the current search';
+
+            selectorControls.appendChild(friendSearch);
+            selectorControls.appendChild(selectShownButton);
+            selectorControls.appendChild(clearShownButton);
+
+            const friendList = document.createElement('div');
+
+            friendList.className = 'spt-friends-selector-list';
+            friendList.setAttribute('role', 'group');
+            friendList.setAttribute(
+                'aria-label',
+                'Friends who will receive the profile comment'
+            );
+
+            const friendOptions = friends.map((friend) => {
+                const row = document.createElement('label');
+
+                row.className = 'spt-friends-selector-row';
+
+                const checkbox = document.createElement('input');
+
+                checkbox.type = 'checkbox';
+                checkbox.value = friend.steamid;
+                checkbox.checked = true;
+                checkbox.setAttribute(
+                    'aria-label',
+                    `Post the comment to ${friend.name}`
+                );
+
+                let avatar;
+
+                if (friend.avatarUrl) {
+                    avatar = document.createElement('img');
+                    avatar.src = friend.avatarUrl;
+                    avatar.alt = '';
+                    avatar.loading = 'lazy';
+                    avatar.referrerPolicy = 'no-referrer';
+                } else {
+                    avatar = document.createElement('span');
+                    avatar.textContent = friend.name.slice(0, 1);
+                    avatar.setAttribute('aria-hidden', 'true');
+                }
+
+                avatar.className = 'spt-friends-selector-avatar';
+
+                const name = document.createElement('span');
+
+                name.className = 'spt-friends-selector-name';
+                name.textContent = friend.name;
+
+                row.appendChild(checkbox);
+                row.appendChild(avatar);
+                row.appendChild(name);
+                friendList.appendChild(row);
+
+                return {
+                    checkbox,
+                    friend,
+                    row,
+                    searchText: normalizeFriendSearch(friend.name),
+                };
+            });
+
+            const noFriendMatches = document.createElement('div');
+
+            noFriendMatches.className = 'spt-friends-selector-empty';
+            noFriendMatches.textContent = 'No friends match this search.';
+            noFriendMatches.hidden = true;
+            friendList.appendChild(noFriendMatches);
+
+            selector.appendChild(selectorHeader);
+            selector.appendChild(selectorControls);
+            selector.appendChild(friendList);
 
             const textarea = document.createElement('textarea');
 
@@ -619,6 +756,7 @@
 
             content.appendChild(description);
             content.appendChild(pace);
+            content.appendChild(selector);
             content.appendChild(textarea);
             content.appendChild(characterCount);
             content.appendChild(progress);
@@ -630,19 +768,86 @@
 
             let running = false;
 
-            function makeDialogButton(text, primary) {
+            function makeDialogButton(text, primary, compact = false) {
                 const button = document.createElement('button');
 
                 button.type = 'button';
                 button.className = primary
-                    ? 'btnv6_blue_hoverfade btn_medium'
-                    : 'btn_grey_white_innerfade btn_medium';
+                    ? 'btnv6_blue_hoverfade'
+                    : 'btn_grey_white_innerfade';
+                button.classList.add(compact ? 'btn_small' : 'btn_medium');
 
                 const label = document.createElement('span');
 
                 label.textContent = text;
                 button.appendChild(label);
                 return button;
+            }
+
+            function normalizeFriendSearch(value) {
+                return String(value || '')
+                    .normalize('NFKD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLocaleLowerCase();
+            }
+
+            let visibleFriendCount = friends.length;
+
+            function updateSelectionSummary() {
+                const selectedCount = selectedSteamIds.size;
+
+                description.textContent =
+                    'The same public profile comment will be posted to ' +
+                    `${selectedCount} selected friend(s), one at a time.`;
+                selectionCount.textContent =
+                    `${selectedCount} selected · ` +
+                    `${visibleFriendCount} shown`;
+                startButton.disabled = selectedCount === 0;
+            }
+
+            function applyFriendFilter() {
+                const query = normalizeFriendSearch(friendSearch.value);
+
+                visibleFriendCount = 0;
+
+                friendOptions.forEach((option) => {
+                    const isVisible =
+                        !query || option.searchText.includes(query);
+
+                    option.row.hidden = !isVisible;
+                    visibleFriendCount += isVisible ? 1 : 0;
+                });
+
+                noFriendMatches.hidden = visibleFriendCount !== 0;
+                updateSelectionSummary();
+            }
+
+            function setShownFriendsSelected(selected) {
+                friendOptions.forEach((option) => {
+                    if (option.row.hidden) {
+                        return;
+                    }
+
+                    option.checkbox.checked = selected;
+
+                    if (selected) {
+                        selectedSteamIds.add(option.friend.steamid);
+                    } else {
+                        selectedSteamIds.delete(option.friend.steamid);
+                    }
+                });
+
+                updateSelectionSummary();
+            }
+
+            function disableFriendSelector() {
+                friendSearch.disabled = true;
+                selectShownButton.disabled = true;
+                clearShownButton.disabled = true;
+
+                friendOptions.forEach((option) => {
+                    option.checkbox.disabled = true;
+                });
             }
 
             function closeDialog() {
@@ -670,9 +875,9 @@
                     `Failed: ${failed}`;
             }
 
-            function setProgress(completed) {
-                const percentage = friends.length
-                    ? (completed / friends.length) * 100
+            function setProgress(completed, total) {
+                const percentage = total
+                    ? (completed / total) * 100
                     : 0;
 
                 progressFill.style.width = `${percentage}%`;
@@ -702,6 +907,16 @@
                     return;
                 }
 
+                const selectedFriends = friends.filter((friend) =>
+                    selectedSteamIds.has(friend.steamid)
+                );
+
+                if (!selectedFriends.length) {
+                    setStatus('Select at least one friend before starting.');
+                    friendSearch.focus();
+                    return;
+                }
+
                 const sessionid = getSessionId();
 
                 if (!sessionid) {
@@ -712,7 +927,7 @@
                 }
 
                 const confirmed = window.confirm(
-                    `Post this comment publicly to ${friends.length} ` +
+                    `Post this comment publicly to ${selectedFriends.length} ` +
                     'friend profile(s)?\n\n' +
                     'The run can take a long time. You can stop it after the ' +
                     'current request, but comments already posted will remain.'
@@ -731,6 +946,7 @@
 
                 running = true;
                 textarea.disabled = true;
+                disableFriendSelector();
                 startButton.hidden = true;
                 cancelButton.hidden = true;
                 closeButton.disabled = true;
@@ -746,19 +962,24 @@
                 setCounters(posted, skipped, failed);
 
                 try {
-                    for (let index = 0; index < friends.length; index += 1) {
+                    for (
+                        let index = 0;
+                        index < selectedFriends.length;
+                        index += 1
+                    ) {
                         if (stopRequested) {
                             break;
                         }
 
-                        const friend = friends[index];
+                        const friend = selectedFriends[index];
                         let cooldownRetries = 0;
                         let handled = false;
                         let failedRequest = false;
 
                         while (!stopRequested && !handled) {
                             setStatus(
-                                `Posting ${index + 1} of ${friends.length}: ` +
+                                `Posting ${index + 1} of ` +
+                                `${selectedFriends.length}: ` +
                                 `${friend.name}...`
                             );
 
@@ -821,13 +1042,16 @@
 
                         if (handled) {
                             completed += 1;
-                            setProgress(completed);
+                            setProgress(
+                                completed,
+                                selectedFriends.length
+                            );
                             setCounters(posted, skipped, failed);
                         }
 
                         if (
                             !stopRequested &&
-                            index < friends.length - 1
+                            index < selectedFriends.length - 1
                         ) {
                             await waitWithStatus(
                                 failedRequest
@@ -871,6 +1095,24 @@
                 characterCount.textContent =
                     `${textarea.value.length} / ${textarea.maxLength}`;
             });
+            friendOptions.forEach((option) => {
+                option.checkbox.addEventListener('change', () => {
+                    if (option.checkbox.checked) {
+                        selectedSteamIds.add(option.friend.steamid);
+                    } else {
+                        selectedSteamIds.delete(option.friend.steamid);
+                    }
+
+                    updateSelectionSummary();
+                });
+            });
+            friendSearch.addEventListener('input', applyFriendFilter);
+            selectShownButton.addEventListener('click', () => {
+                setShownFriendsSelected(true);
+            });
+            clearShownButton.addEventListener('click', () => {
+                setShownFriendsSelected(false);
+            });
             closeButton.addEventListener('click', closeDialog);
             cancelButton.addEventListener('click', closeDialog);
             startButton.addEventListener('click', run);
@@ -887,6 +1129,7 @@
             });
             document.addEventListener('keydown', onKeyDown);
 
+            applyFriendFilter();
             textarea.focus();
         }
 
@@ -918,7 +1161,10 @@
                 }
 
                 #spt-friends-comment-dialog {
-                    width: min(560px, calc(100vw - 32px));
+                    display: flex;
+                    flex-direction: column;
+                    width: min(660px, calc(100vw - 32px));
+                    max-height: calc(100vh - 32px);
                     color: #d6d7d8;
                     background: #171a21;
                     border: 1px solid #2a475e;
@@ -960,6 +1206,7 @@
                 }
 
                 .spt-friends-comment-content {
+                    overflow-y: auto;
                     padding: 18px;
                     font-size: 14px;
                     line-height: 1.45;
@@ -972,6 +1219,170 @@
                 .spt-friends-comment-note {
                     color: #8f98a0;
                     font-size: 12px;
+                }
+
+                .spt-friends-selector {
+                    margin-top: 14px;
+                    overflow: hidden;
+                    background: #101820;
+                    border: 1px solid #000000;
+                    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.65);
+                }
+
+                .spt-friends-selector-header {
+                    display: flex;
+                    align-items: baseline;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 9px 10px 7px;
+                    background: rgba(42, 71, 94, 0.42);
+                }
+
+                .spt-friends-selector-title {
+                    color: #ffffff;
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                .spt-friends-selection-count {
+                    color: #8f98a0;
+                    font-size: 11px;
+                    text-align: right;
+                }
+
+                .spt-friends-selector-controls {
+                    display: grid;
+                    grid-template-columns: minmax(140px, 1fr) auto auto;
+                    gap: 6px;
+                    padding: 8px;
+                    background: #16202b;
+                    border-top: 1px solid rgba(103, 193, 241, 0.1);
+                }
+
+                .spt-friends-search {
+                    box-sizing: border-box;
+                    min-width: 0;
+                    height: 28px;
+                    padding: 4px 8px;
+                    color: #d6d7d8;
+                    background: #222b35;
+                    border: 1px solid #000000;
+                    border-radius: 2px;
+                    box-shadow: inset 0 0 4px #000000;
+                    font: 12px/1.4 "Motiva Sans", Arial, sans-serif;
+                }
+
+                .spt-friends-search:focus {
+                    border-color: #67c1f1;
+                    outline: 0;
+                }
+
+                .spt-friends-search::placeholder {
+                    color: #6f7882;
+                }
+
+                .spt-friends-selector-controls button {
+                    white-space: nowrap;
+                }
+
+                .spt-friends-selector-list {
+                    max-height: 220px;
+                    overflow-y: auto;
+                    scrollbar-color: #4b667a #17212b;
+                }
+
+                .spt-friends-selector-row {
+                    display: grid;
+                    grid-template-columns: 18px 34px minmax(0, 1fr);
+                    align-items: center;
+                    gap: 9px;
+                    min-height: 42px;
+                    padding: 4px 10px;
+                    color: #c7d5e0;
+                    background: rgba(27, 40, 56, 0.58);
+                    border-top: 1px solid rgba(255, 255, 255, 0.025);
+                    cursor: pointer;
+                    box-sizing: border-box;
+                }
+
+                .spt-friends-selector-row:nth-child(even) {
+                    background: rgba(34, 49, 65, 0.58);
+                }
+
+                .spt-friends-selector-row:hover {
+                    color: #ffffff;
+                    background: rgba(42, 71, 94, 0.82);
+                }
+
+                .spt-friends-selector-row input[type="checkbox"] {
+                    appearance: none;
+                    display: grid;
+                    place-content: center;
+                    width: 16px;
+                    height: 16px;
+                    margin: 0;
+                    background: #0e141b;
+                    border: 1px solid #4b667a;
+                    border-radius: 2px;
+                    cursor: pointer;
+                }
+
+                .spt-friends-selector-row input[type="checkbox"]::before {
+                    width: 9px;
+                    height: 9px;
+                    background: #66c0f4;
+                    box-shadow: 0 0 4px rgba(102, 192, 244, 0.55);
+                    content: "";
+                    transform: scale(0);
+                    transition: transform 0.08s ease-in-out;
+                }
+
+                .spt-friends-selector-row input[type="checkbox"]:checked::before {
+                    transform: scale(1);
+                }
+
+                .spt-friends-selector-row input[type="checkbox"]:focus-visible {
+                    outline: 1px solid #ffffff;
+                    outline-offset: 2px;
+                }
+
+                .spt-friends-selector-row input[type="checkbox"]:disabled {
+                    cursor: default;
+                    opacity: 0.55;
+                }
+
+                .spt-friends-selector-avatar {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    overflow: hidden;
+                    color: #67c1f1;
+                    background: #1b2838;
+                    border: 1px solid #3f5364;
+                    object-fit: cover;
+                    box-sizing: border-box;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                }
+
+                .spt-friends-selector-name {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .spt-friends-selector-empty {
+                    padding: 18px 10px;
+                    color: #8f98a0;
+                    text-align: center;
+                    font-size: 12px;
+                }
+
+                .spt-friends-selector-row[hidden],
+                .spt-friends-selector-empty[hidden] {
+                    display: none;
                 }
 
                 #spt-friends-comment-text {
@@ -1049,6 +1460,16 @@
                 .spt-friends-comment-actions button[hidden],
                 .spt-friends-progress[hidden] {
                     display: none;
+                }
+
+                @media (max-width: 600px) {
+                    .spt-friends-selector-controls {
+                        grid-template-columns: 1fr 1fr;
+                    }
+
+                    .spt-friends-search {
+                        grid-column: 1 / -1;
+                    }
                 }
             `;
 
