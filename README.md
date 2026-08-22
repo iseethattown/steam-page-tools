@@ -4,21 +4,13 @@
   <img src="assets/icon-source.png" width="160" alt="Steam Page Tools icon">
 </p>
 
-Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds SteamSets profile links, cross-page badge tools, paced friends-page comments, and bulk Store actions directly to Steam.
+Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge tools, paced friends-page comments, and bulk Store actions directly to Steam.
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
-
-> **Project status:** Version 1.2.0 is being prepared for its first Chrome Web Store and Firefox Add-ons submissions. Official store links will be added here after publication.
 
 > **Unofficial project:** Steam Page Tools is independent and is not affiliated with or endorsed by Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
 
 ## Features
-
-### Steam Community profiles
-
-On Steam profile pages:
-
-- Open the viewed account on SteamSets in a new tab from the profile action bar. The link is generated locally from Steam's numeric account ID and uses a no-referrer policy.
 
 ### Badge pages
 
@@ -36,7 +28,7 @@ On the signed-in user's own badge pages:
 > [!WARNING]
 > Auto-crafting consumes cards and cannot be undone. The extension asks for confirmation before crafting begins.
 
-<img src="https://i.ibb.co/v6NzND7w/Screenshot-2026-08-02-140336.png" alt="Steam badge">
+<img src="https://i.ibb.co/fdgkZdkp/image.png" alt="Steam badge">
 
 ### Friends page
 
@@ -49,15 +41,21 @@ On the signed-in user's friends page:
 
 The extension asks for confirmation before a run begins. Comments already posted remain on the recipient profiles if a run is stopped.
 
+<img src="https://i.ibb.co/fYfRQKbq/Capture-d-cran-2026-08-22-231750.png" alt="Button">
+
+<img src="https://i.ibb.co/j9jYqjPq/Capture-d-cran-2026-08-22-231800.png" width="500" alt="Friends selector">
+
 ### Steam Store search results
 
-- Select games directly from the search results.
+- Select games directly from the search results.<>
 - Add selected games to the cart in one run.
 - Add selected games to the wishlist after refreshing the account's current wishlist; games already on it are skipped automatically.
 
 Bundle rows are not supported. When a game has multiple purchase options, the cart action uses Steam's first/default package.
 
-<img src="https://i.ibb.co/wFfwYrVW/Screenshot-2026-07-26-012816.png" alt="Selection checkboxes on Steam search results"><img src="https://i.ibb.co/yc324R1q/image.png" alt="Bulk cart and wishlist action bar">
+<img src="https://i.ibb.co/wFfwYrVW/Screenshot-2026-07-26-012816.png" alt="Selection checkboxes on Steam search results">
+
+<img src="https://i.ibb.co/yc324R1q/image.png" alt="Bulk cart and wishlist action bar">
 
 ## Where it runs
 
@@ -79,20 +77,6 @@ It does not request access to every website, WebExtension API permissions, a too
 
 Firefox 140 or later is required so Firefox can display its built-in consent UI for the data categories declared by the extension.
 
-## Safety model
-
-Account-changing actions use Steam's existing signed-in session and are sent only after a user starts the corresponding operation.
-
-- Community requests are restricted to `https://steamcommunity.com`.
-- Store requests are restricted to `https://store.steampowered.com`.
-- SteamSets links open only after a user activates them, use `noopener noreferrer`, and do not load remote code or assets into Steam pages.
-- Constructed profile, game-card, redirect, and mutation URLs are rejected if they leave the expected Steam origin.
-- Crafting uses confirmation, request pacing, rate-limit handling, fresh-state reconciliation, batch limits, and a short-lived cross-tab lock.
-- Friends-page commenting uses an explicit recipient selector, confirmation, five-second pacing, disabled-profile skips, 20-second failure recovery, bounded cooldown retries, a stop control, and a short-lived cross-tab lock.
-- Failed or rate-limited Store items remain selected when possible so they can be reviewed or retried.
-
-These safeguards reduce accidental or duplicate operations, but users should still review every destructive confirmation carefully.
-
 ## Privacy
 
 Steam Page Tools has:
@@ -106,12 +90,6 @@ Steam Page Tools has:
 The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Store selections and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
 
 See [PRIVACY.md](PRIVACY.md) for the complete disclosure.
-
-## Verification
-
-The project includes deterministic packaging, manifest and permission validation, secret and private-path checks, ESLint, archive inspection, and reproducibility checks.
-
-Authenticated, non-destructive Chrome scenarios have been exercised against live Steam pages. Firefox smoke testing and account-changing mutation scenarios remain part of the release checklist.
 
 ## Source and development
 
@@ -132,9 +110,3 @@ Additional project documentation:
 
 - [CHANGELOG.md](CHANGELOG.md) — version history
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
-
-## Copyright
-
-Copyright (C) 2026 x0697x. All rights reserved.
-
-Steam Page Tools must not be presented as affiliated with or endorsed by Valve Corporation.
