@@ -1,6 +1,4 @@
 // Copyright (C) 2026 x0697x
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 const browserGlobals = {
     DOMParser: 'readonly',
     MutationObserver: 'readonly',

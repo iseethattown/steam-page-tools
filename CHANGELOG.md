@@ -38,7 +38,6 @@ All notable changes to the browser-extension edition are documented here.
 - Shared main-world content script for the existing Steam Community badge tools and Steam Store bulk cart and wishlist tools.
 - Explicit Steam-origin checks for profile, game-card, redirect, and mutation URLs.
 - Browser-specific manifests, locally packaged project artwork in all required icon sizes, deterministic packaging, validation, documentation, and non-publishing CI.
-- GNU General Public License version 3 or later coverage for the extension source, documentation, and bundled project artwork, with the complete license included in browser packages.
 
 ### Changed
 

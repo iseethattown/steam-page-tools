@@ -133,10 +133,8 @@ Additional project documentation:
 - [CHANGELOG.md](CHANGELOG.md) — version history
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
 
-## License
+## Copyright
 
-Copyright (C) 2026 x0697x.
+Copyright (C) 2026 x0697x. All rights reserved.
 
-The extension source, documentation, and bundled project artwork are free software licensed under the [GNU General Public License version 3 or later](LICENSE) (`GPL-3.0-or-later`).
-
-The GPL does not grant rights to Valve Corporation's trademarks. Steam Page Tools must not be presented as affiliated with or endorsed by Valve.
+Steam Page Tools must not be presented as affiliated with or endorsed by Valve Corporation.

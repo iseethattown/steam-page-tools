@@ -1,6 +1,4 @@
 // Copyright (C) 2026 x0697x
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 import assert from 'node:assert/strict';
 import {
     access,
@@ -46,7 +44,6 @@ const contentScript = {
     world: 'MAIN',
 };
 const expectedPackageFiles = [
-    'LICENSE',
     'assets/icons/icon-128.png',
     'assets/icons/icon-16.png',
     'assets/icons/icon-32.png',

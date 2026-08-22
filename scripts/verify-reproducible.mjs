@@ -1,6 +1,4 @@
 // Copyright (C) 2026 x0697x
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
