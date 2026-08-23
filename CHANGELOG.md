@@ -2,6 +2,12 @@
 
 All notable changes to the browser-extension edition are documented here.
 
+## 1.2.1 - 2026-08-23
+
+### Changed
+
+- Grouped the friends-page action buttons with consistent spacing.
+
 ## 1.2.0 - 2026-08-22
 
 ### Added

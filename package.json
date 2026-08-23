@@ -1,6 +1,6 @@
 {
   "name": "steam-page-tools",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "An unofficial Chrome and Firefox extension with Steam profile links, badge tools, friends-page comments, and bulk Store tools.",
   "type": "module",
