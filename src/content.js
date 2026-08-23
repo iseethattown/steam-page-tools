@@ -502,8 +502,34 @@
             button.addEventListener('click', openFriendsCommentDialog);
 
             const addButton = titleBar.querySelector('#add_friends_button');
+            const manageButton = Array.from(
+                titleBar.querySelectorAll('.profile_friends.manage_link')
+            ).find((candidate) => candidate !== addButton);
+            const getTitleBarItem = (element) => {
+                let item = element;
 
-            titleBar.insertBefore(button, addButton || null);
+                while (item && item.parentElement !== titleBar) {
+                    item = item.parentElement;
+                }
+
+                return item?.parentElement === titleBar ? item : null;
+            };
+            const manageItem = getTitleBarItem(manageButton);
+            const addItem = getTitleBarItem(addButton);
+            const actions = document.createElement('span');
+
+            actions.id = 'spt-friends-title-actions';
+            titleBar.insertBefore(actions, manageItem || addItem || null);
+
+            if (manageItem) {
+                actions.appendChild(manageItem);
+            }
+
+            actions.appendChild(button);
+
+            if (addItem && addItem !== manageItem) {
+                actions.appendChild(addItem);
+            }
         }
 
         function openFriendsCommentDialog() {
@@ -1135,9 +1161,20 @@
 
             style.id = 'spt-friends-comment-styles';
             style.textContent = `
+                #spt-friends-title-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-left: auto;
+                }
+
+                #spt-friends-title-actions > * {
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                }
+
                 #spt-friends-comment-button {
                     flex: 0 0 auto;
-                    margin-right: 10px;
                 }
 
                 #spt-friends-comment-overlay {
