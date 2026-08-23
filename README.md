@@ -1,8 +1,8 @@
-# Steam Page Tools
-
 <p align="center">
   <img src="assets/icon-source.png" width="160" alt="Steam Page Tools icon">
 </p>
+
+# Steam Page Tools
 
 Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge tools, paced friends-page comments, and bulk Store actions directly to Steam.
 
