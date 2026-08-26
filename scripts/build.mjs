@@ -25,7 +25,7 @@ const distributions = {
         manifest: resolve(repoRoot, 'manifests/chrome.json'),
         archive: resolve(
             distRoot,
-            'steam-page-tools-chrome-v1.2.2.zip'
+            'steam-page-tools-chrome-v1.3.0.zip'
         ),
     },
     firefox: {
@@ -33,7 +33,7 @@ const distributions = {
         manifest: resolve(repoRoot, 'manifests/firefox.json'),
         archive: resolve(
             distRoot,
-            'steam-page-tools-firefox-v1.2.2.zip'
+            'steam-page-tools-firefox-v1.3.0.zip'
         ),
     },
 };

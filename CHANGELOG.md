@@ -2,7 +2,7 @@
 
 All notable changes to the browser-extension edition are documented here.
 
-## Unreleased
+## 1.3.0 - 2026-08-27
 
 ### Added
 
