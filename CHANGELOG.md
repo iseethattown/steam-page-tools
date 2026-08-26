@@ -6,27 +6,7 @@ All notable changes to the browser-extension edition are documented here.
 
 ### Added
 
-- A Steam-styled toolbar settings popup with a master switch and separate default-enabled toggles for the SteamSets profile link, badge tools, friends comments, inventory tools, and Store bulk actions.
-- A compact read-only Steam inventory valuation strip with paginated loading, normalized stack-aware items, prices attached to Steam's native item tiles and details pane, listing and quick-sale estimates, fee and seller-net calculations, recent price history, pricing coverage, per-game totals, collapsed filters and selection tools, a bounded request queue, and a currency-aware local price cache.
-- Direct bulk listing and Gems-conversion workflows for the signed-in user's own inventory, using click-to-toggle selections with a blue overlay and checkmark on Steam's native item tiles, a review screen, one batch confirmation, immediate revalidation, sequential requests, stop controls, and uncertain-result reconciliation without automatic mutation retries.
-- Inventory action selections are cleared when switching Steam inventory game or context tabs so hidden items cannot remain selected accidentally.
-- Inventory and Market loading status now includes a visible Steam-blue spinner.
-- Marketable item badges show `Loading…` instead of `Unpriced` until their current Market lookup finishes.
-- A reviewed `Quick sell` action targets refreshed highest buy orders, excludes items without an order, locks quantity and price, and skips submission if an order changes.
-- `Quick sell` remains reviewable when selected items have no active buyers, so Steam's unavailable-order reason is visible instead of leaving an unexplained disabled button.
-- Sale and quick-sale preparation now opens a compact loading window with live Market-price refresh progress and a cancel control before the review appears.
-- The inventory header and overall listing metric now explicitly identify the total inventory value, and the valuation clock has been removed.
-- Gems quotes now parse Steam's current five-argument `GetGooValue` action correctly while retaining compatibility with older three-argument inventory payloads.
-- Inventory tiles can be selected only while `Show tools` is open; hiding the tools clears the batch, and the current item’s Market estimate stays above Steam’s visible details panel.
-- Gems reviews and conversions now use Steam’s profile-scoped, asset-specific quote and conversion endpoints, and successful responses containing Steam’s confirmation HTML are recognized correctly.
-- Confirmed inventory sales and Gems conversions are shown in Steam green instead of the error color.
-- Inventory valuation now waits for Steam’s native initial inventory request, yields whenever Steam starts another native inventory request, and no longer launches a full valuation refresh from generic DOM mutations.
-- Each discovered or cached Market price now appears immediately on matching Steam item tiles and in valuation totals while the remaining lookups continue.
-- Grouped Steam Market items now use their exact variant filters, preventing another exterior or quality (such as Factory New) from being shown for the selected item and from affecting Quick sell.
-- Inventory filters now include a Steam-styled reset button that clears the search, dropdown, and price-range filters without changing the selected-item batch.
-- Inventory Market prices use the signed-in account's wallet currency across all 47 Steam currency IDs, including correct hundredths conversion and whole-unit display for currencies such as JPY, KRW, and VND.
-- Unit and fixture tests for pagination, normalization, price parsing, integer fee calculations, cache behavior, cancellation and retry limits, selection requirements, duplicate blocking, action revalidation, and ambiguous outcomes.
-- Inventory-specific architecture notes and a manual test checklist.
+- Inventory manager and prices
 
 ## 1.2.1 - 2026-08-23
 
