@@ -17,13 +17,14 @@ import { inflateRawSync } from 'node:zlib';
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const manifestDescription =
-    'Unofficial Steam profile links, badge search and crafting, ' +
-    'friends-page comments, and bulk Store cart and wishlist tools.';
+    'Unofficial Steam profile, badge, friends, inventory valuation, ' +
+    'and bulk Store tools.';
 const executableUrlAllowlist = new Set([
     'https://steamcommunity.com',
     'https://store.steampowered.com',
     'https://beta.steamsets.com',
     'https://beta.steamsets.com/badges/search',
+    'https://community.fastly.steamstatic.com/economy/image/',
 ]);
 const matches = [
     'https://steamcommunity.com/my/friends*',
@@ -37,12 +38,60 @@ const icons = {
     48: 'assets/icons/icon-48.png',
     128: 'assets/icons/icon-128.png',
 };
+const action = {
+    default_icon: icons,
+    default_popup: 'src/popup.html',
+    default_title: 'Steam Page Tools settings',
+};
+const settingsMatches = [
+    'https://steamcommunity.com/my/friends*',
+    'https://steamcommunity.com/my/inventory*',
+    'https://steamcommunity.com/id/*',
+    'https://steamcommunity.com/profiles/*',
+    'https://store.steampowered.com/search*',
+];
+const settingsContentScript = {
+    matches: settingsMatches,
+    js: ['src/settings.js', 'src/settings-bridge.js'],
+    run_at: 'document_start',
+};
 const contentScript = {
     matches,
-    js: ['src/content.js'],
+    js: ['src/settings.js', 'src/content.js'],
     run_at: 'document_idle',
     world: 'MAIN',
 };
+const inventoryBundlePath =
+    'src/features/steam-inventory/inventory.bundle.js';
+const inventoryMatches = [
+    'https://steamcommunity.com/my/inventory*',
+    'https://steamcommunity.com/id/*/inventory*',
+    'https://steamcommunity.com/profiles/*/inventory*',
+];
+const inventoryContentScript = {
+    matches: inventoryMatches,
+    js: ['src/settings.js', inventoryBundlePath],
+    run_at: 'document_idle',
+    world: 'MAIN',
+};
+const inventorySourceFiles = [
+    'src/features/steam-inventory/types.js',
+    'src/features/steam-inventory/storage.js',
+    'src/features/steam-inventory/safety.js',
+    'src/features/steam-inventory/steam-api.js',
+    'src/features/steam-inventory/inventory-service.js',
+    'src/features/steam-inventory/pricing-service.js',
+    'src/features/steam-inventory/valuation-service.js',
+    'src/features/steam-inventory/action-service.js',
+    'src/features/steam-inventory/ui/dom.js',
+    'src/features/steam-inventory/ui/inventory-summary.js',
+    'src/features/steam-inventory/ui/inventory-table.js',
+    'src/features/steam-inventory/ui/action-preview-dialog.js',
+    'src/features/steam-inventory/ui/action-progress-dialog.js',
+    'src/features/steam-inventory/ui/styles.js',
+    'src/features/steam-inventory/ui/index.js',
+    'src/features/steam-inventory/index.js',
+];
 const expectedPackageFiles = [
     'assets/icons/icon-128.png',
     'assets/icons/icon-16.png',
@@ -50,7 +99,37 @@ const expectedPackageFiles = [
     'assets/icons/icon-48.png',
     'manifest.json',
     'src/content.js',
+    inventoryBundlePath,
+    'src/popup.css',
+    'src/popup.html',
+    'src/popup.js',
+    'src/settings-bridge.js',
+    'src/settings.js',
 ];
+
+async function buildExpectedInventoryBundle() {
+    const sources = await Promise.all(
+        inventorySourceFiles.map((relativePath) => (
+            readFile(resolve(repoRoot, relativePath), 'utf8')
+        ))
+    );
+
+    return Buffer.from([
+        '// Copyright (C) 2026 x0697x',
+        '(function () {',
+        "    'use strict';",
+        '    const inventoryModules = Object.create(null);',
+        ...sources,
+        '    globalThis.SteamPageToolsSettings.waitForPageSettings()',
+        '        .then((settings) => {',
+        '            if (settings.enabled && settings.inventoryTools) {',
+        '                inventoryModules.index.init();',
+        '            }',
+        '        });',
+        '})();',
+        '',
+    ].join('\n'));
+}
 
 function sortObject(value) {
     if (Array.isArray(value)) {
@@ -85,7 +164,7 @@ async function readJson(relativePath) {
 function validateCommonManifest(manifest) {
     assert.equal(manifest.manifest_version, 3);
     assert.equal(manifest.name, 'Steam Page Tools');
-    assert.equal(manifest.version, '1.2.1');
+    assert.equal(manifest.version, '1.2.2');
     assert.equal(manifest.description, manifestDescription);
     assert.equal(
         [...manifest.description].length <= 132,
@@ -97,17 +176,17 @@ function validateCommonManifest(manifest) {
         'https://github.com/ju6697/steam-page-tools'
     );
     assertDeepEqual(manifest.icons, icons, 'Unexpected icon declaration');
+    assertDeepEqual(manifest.action, action, 'Unexpected toolbar action');
     assertDeepEqual(
         manifest.content_scripts,
-        [contentScript],
+        [settingsContentScript, contentScript, inventoryContentScript],
         'Unexpected content script declaration'
     );
-    assert.equal('permissions' in manifest, false);
+    assertDeepEqual(manifest.permissions, ['storage']);
     assert.equal('optional_permissions' in manifest, false);
     assert.equal('host_permissions' in manifest, false);
     assert.equal('optional_host_permissions' in manifest, false);
     assert.equal('background' in manifest, false);
-    assert.equal('action' in manifest, false);
 }
 
 async function validateManifests() {
@@ -120,6 +199,7 @@ async function validateManifests() {
     assertDeepEqual(
         Object.keys(chrome).sort(),
         [
+            'action',
             'content_scripts',
             'description',
             'homepage_url',
@@ -127,6 +207,7 @@ async function validateManifests() {
             'manifest_version',
             'minimum_chrome_version',
             'name',
+            'permissions',
             'version',
         ].sort(),
         'Chrome manifest contains unexpected fields'
@@ -136,6 +217,7 @@ async function validateManifests() {
     assertDeepEqual(
         Object.keys(firefox).sort(),
         [
+            'action',
             'browser_specific_settings',
             'content_scripts',
             'description',
@@ -143,6 +225,7 @@ async function validateManifests() {
             'icons',
             'manifest_version',
             'name',
+            'permissions',
             'version',
         ].sort(),
         'Firefox manifest contains unexpected fields'
@@ -242,6 +325,11 @@ async function validateContentSource() {
     }
 
     for (const required of [
+        'initEnabledFeatures',
+        'settings.profileTools',
+        'settings.badgeTools',
+        'settings.friendsComments',
+        'settings.storeTools',
         "const STEAM_COMMUNITY_ORIGIN = 'https://steamcommunity.com';",
         "const STEAM_STORE_ORIGIN = 'https://store.steampowered.com';",
         'requirePinnedSteamUrl',
@@ -303,6 +391,170 @@ async function validateContentSource() {
     );
 }
 
+async function validateSettingsAndPopup() {
+    const settings = await readFile(resolve(repoRoot, 'src/settings.js'), 'utf8');
+    const bridge = await readFile(
+        resolve(repoRoot, 'src/settings-bridge.js'),
+        'utf8'
+    );
+    const popupScript = await readFile(
+        resolve(repoRoot, 'src/popup.js'),
+        'utf8'
+    );
+    const popupHtml = await readFile(
+        resolve(repoRoot, 'src/popup.html'),
+        'utf8'
+    );
+    const popupCss = await readFile(
+        resolve(repoRoot, 'src/popup.css'),
+        'utf8'
+    );
+    const combined = [settings, bridge, popupScript, popupHtml, popupCss]
+        .join('\n');
+
+    for (const forbidden of [
+        'eval(',
+        'new Function(',
+        'http://',
+        'https://',
+        'innerHTML',
+        'chrome.tabs',
+        'browser.tabs',
+    ]) {
+        assert.equal(
+            combined.includes(forbidden),
+            false,
+            `Settings UI contains forbidden text: ${forbidden}`
+        );
+    }
+
+    for (const required of [
+        "STORAGE_KEY = 'spt-feature-settings-v1'",
+        "PAGE_ATTRIBUTE = 'data-spt-feature-settings'",
+        'waitForPageSettings',
+        'extensionApi.storage.local.get',
+        'extensionApi.storage.local.set',
+        'extensionApi.storage.onChanged.addListener',
+        'data-setting="enabled"',
+        'data-setting="profileTools"',
+        'data-setting="badgeTools"',
+        'data-setting="friendsComments"',
+        'data-setting="inventoryTools"',
+        'data-setting="storeTools"',
+        'Reload open Steam pages to apply changes.',
+    ]) {
+        assert.equal(
+            combined.includes(required),
+            true,
+            `Settings UI is missing required behavior: ${required}`
+        );
+    }
+
+    assert.equal(
+        /<script(?![^>]+src=)[^>]*>/i.test(popupHtml),
+        false,
+        'Popup HTML contains an inline script'
+    );
+    assert.equal(
+        /\son[a-z]+\s*=/i.test(popupHtml),
+        false,
+        'Popup HTML contains an inline event handler'
+    );
+}
+
+async function validateInventorySource() {
+    const entries = await Promise.all(
+        inventorySourceFiles.map(async (relativePath) => ({
+            relativePath,
+            source: await readFile(resolve(repoRoot, relativePath), 'utf8'),
+        }))
+    );
+    const combined = entries.map(({ source }) => source).join('\n');
+
+    for (const forbidden of [
+        '==UserScript==',
+        '@require',
+        '<all_urls>',
+        'chrome.cookies',
+        'browser.cookies',
+        'innerHTML',
+        'eval(',
+        'new Function(',
+        'document.createElement(\'script\')',
+        'document.createElement("script")',
+    ]) {
+        assert.equal(
+            combined.includes(forbidden),
+            false,
+            `Inventory feature contains forbidden text: ${forbidden}`
+        );
+    }
+
+    for (const required of [
+        '/inventory/${ownerSteamId}/${appId}/${contextId}',
+        '/market/listings/${encodeURIComponent(appId)}/',
+        '/market/itemordershistogram',
+        '/market/pricehistory/',
+        '/market/sellitem/',
+        '/profiles/${ownerSteamId}/ajaxgetgoovalue/',
+        '/profiles/${ownerSteamId}/ajaxgrindintogoo/',
+        'credentials: \'include\'',
+        'MAX_READ_ATTEMPTS = 3',
+        'DEFAULT_CONCURRENCY = 2',
+        'MAX_CONSECUTIVE_ERRORS = 5',
+        'Show tools',
+        'Quick sell',
+        'Select at least one eligible item',
+        'spt-inventory-tile-selection',
+        'spt-inventory-loading-spinner',
+        'Loading…',
+        'Duplicate operation blocked',
+        'Price changed before submission',
+        'Highest buy order changed before submission',
+        'Steam account authorization changed',
+        'Confirm ${actionLabel}',
+        'textContent',
+    ]) {
+        assert.equal(
+            combined.includes(required),
+            true,
+            `Inventory feature is missing required behavior: ${required}`
+        );
+    }
+
+    for (const { relativePath, source } of entries) {
+        if (!relativePath.endsWith('steam-api.js')) {
+            assert.equal(
+                /\bfetchImpl\s*\(/.test(source),
+                false,
+                `${relativePath} performs a Steam request outside steam-api`
+            );
+        }
+    }
+
+    const storageSource = entries.find(({ relativePath }) => (
+        relativePath.endsWith('/storage.js')
+    )).source;
+
+    for (const sensitive of ['sessionid', 'cookie', 'authorization']) {
+        assert.equal(
+            storageSource.toLowerCase().includes(sensitive),
+            false,
+            `Inventory storage references sensitive data: ${sensitive}`
+        );
+    }
+
+    const urls = combined.match(/https:\/\/[^\s'"`)]+/g) || [];
+
+    for (const url of urls) {
+        assert.equal(
+            executableUrlAllowlist.has(url),
+            true,
+            `Inventory source contains an unapproved URL: ${url}`
+        );
+    }
+}
+
 async function walkFiles(root, excludedNames = new Set()) {
     const files = [];
 
@@ -338,7 +590,8 @@ async function validateRepositoryHygiene() {
         new Set(['.git', 'dist', 'node_modules'])
     );
     const textExtensions = new Set([
-        '.js', '.json', '.md', '.mjs', '.yml', '.yaml', '.gitignore',
+        '.css', '.html', '.js', '.json', '.md', '.mjs', '.yml', '.yaml',
+        '.gitignore',
     ]);
     const secretPatterns = [
         /github_pat_[A-Za-z0-9_]+/,
@@ -511,18 +764,20 @@ async function validateDistribution(browser) {
     const directory = resolve(repoRoot, `dist/${browser}`);
     const archive = resolve(
         repoRoot,
-        `dist/steam-page-tools-${browser}-v1.2.1.zip`
+        `dist/steam-page-tools-${browser}-v1.2.2.zip`
     );
     const manifestSource = resolve(repoRoot, `manifests/${browser}.json`);
 
     for (const relativePath of expectedPackageFiles) {
-        const source = relativePath === 'manifest.json'
-            ? manifestSource
-            : resolve(repoRoot, relativePath);
         const packaged = resolve(directory, relativePath);
+        const expectedContent = relativePath === 'manifest.json'
+            ? await readFile(manifestSource)
+            : relativePath === inventoryBundlePath
+                ? await buildExpectedInventoryBundle()
+                : await readFile(resolve(repoRoot, relativePath));
 
         assert.equal(
-            (await readFile(packaged)).equals(await readFile(source)),
+            (await readFile(packaged)).equals(expectedContent),
             true,
             `${browser} distribution differs at ${relativePath}`
         );
@@ -564,11 +819,11 @@ async function validateBuildOutputsWhenPresent() {
         resolve(repoRoot, 'dist/firefox'),
         resolve(
             repoRoot,
-            'dist/steam-page-tools-chrome-v1.2.1.zip'
+            'dist/steam-page-tools-chrome-v1.2.2.zip'
         ),
         resolve(
             repoRoot,
-            'dist/steam-page-tools-firefox-v1.2.1.zip'
+            'dist/steam-page-tools-firefox-v1.2.2.zip'
         ),
     ];
     const present = await Promise.all(expected.map(exists));
@@ -590,6 +845,8 @@ await validateManifests();
 await validateIcons();
 await validateIconSource();
 await validateContentSource();
+await validateSettingsAndPopup();
+await validateInventorySource();
 await validateRepositoryHygiene();
 await validateBuildOutputsWhenPresent();
 

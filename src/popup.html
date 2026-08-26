@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Steam Page Tools settings</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header class="popup-header">
+        <img src="../assets/icons/icon-48.png" width="32" height="32" alt="">
+        <div>
+            <h1>Steam Page Tools</h1>
+            <p>Feature settings</p>
+        </div>
+    </header>
+
+    <form id="settings-form">
+        <label class="setting-row master-setting">
+            <span class="setting-copy">
+                <strong>All features</strong>
+                <span>Enable or disable the extension on Steam.</span>
+            </span>
+            <input type="checkbox" data-setting="enabled">
+            <span class="switch" aria-hidden="true"></span>
+        </label>
+
+        <section id="feature-settings" aria-label="Individual features">
+            <label class="setting-row">
+                <span class="setting-copy">
+                    <strong>Profile link</strong>
+                    <span>Show the SteamSets profile shortcut.</span>
+                </span>
+                <input type="checkbox" data-setting="profileTools">
+                <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="setting-row">
+                <span class="setting-copy">
+                    <strong>Badge tools</strong>
+                    <span>Search, card drops, SteamSets, and crafting.</span>
+                </span>
+                <input type="checkbox" data-setting="badgeTools">
+                <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="setting-row">
+                <span class="setting-copy">
+                    <strong>Friends comments</strong>
+                    <span>Show the selected-friends comment tool.</span>
+                </span>
+                <input type="checkbox" data-setting="friendsComments">
+                <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="setting-row">
+                <span class="setting-copy">
+                    <strong>Inventory tools</strong>
+                    <span>Valuation, listings, quick sales, and Gems.</span>
+                </span>
+                <input type="checkbox" data-setting="inventoryTools">
+                <span class="switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="setting-row">
+                <span class="setting-copy">
+                    <strong>Store bulk actions</strong>
+                    <span>Selection, cart, and wishlist controls.</span>
+                </span>
+                <input type="checkbox" data-setting="storeTools">
+                <span class="switch" aria-hidden="true"></span>
+            </label>
+        </section>
+    </form>
+
+    <footer>
+        <span id="save-status" role="status" aria-live="polite"></span>
+        <span>Reload open Steam pages to apply changes.</span>
+    </footer>
+
+    <script src="settings.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

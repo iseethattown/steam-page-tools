@@ -4,13 +4,17 @@
 
 # Steam Page Tools
 
-Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge tools, paced friends-page comments, and bulk Store actions directly to Steam.
+Steam Page Tools is an unofficial browser extension for Chrome and Firefox that adds cross-page badge tools, paced friends-page comments, inventory valuation and reviewed bulk actions, and bulk Store actions directly to Steam.
 
 It is designed for people who manage large badge libraries, compare card-drop status across many pages, or want to select several Store results before adding them to a cart or wishlist.
 
 > **Unofficial project:** Steam Page Tools is independent and is not affiliated with or endorsed by Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
 
 ## Features
+
+### Settings popup
+
+Click the extension icon to enable or disable Steam Page Tools as a whole or configure each feature area separately: the SteamSets profile link, badge tools, friends comments, inventory tools, and Store bulk actions. All options are enabled by default. Reload an already-open Steam page after changing a setting.
 
 ### Badge pages
 
@@ -45,6 +49,21 @@ The extension asks for confirmation before a run begins. Comments already posted
 
 <img src="https://i.ibb.co/j9jYqjPq/Capture-d-cran-2026-08-22-231800.png" width="500" alt="Friends selector">
 
+### Steam inventory
+
+On Steam Community inventory pages, the extension:
+
+- Loads all available inventory tabs and pages while preserving stack quantities and reporting partial failures.
+- Values marketable items with current Steam Community Market data, including lowest-listing and quick-sale estimates, fees, seller net, recent price history, pricing coverage, and per-game totals.
+- Adds compact price badges to Steam's own item tiles and a detailed estimate to Steam's selected-item pane instead of displaying a separate inventory table.
+- Keeps totals in a narrow native-style strip; search, pricing filters, selection totals, and review controls stay inside a collapsed `Show tools` drawer. Item selection is enabled only while that drawer is open and is cleared when it closes.
+- Uses the signed-in account's Steam wallet currency for Market requests, calculations, inputs, and display, with all official Steam currency IDs supported. Prices are cached for 15 minutes by currency, country, game, and market name. Refresh and cancellation controls remain available.
+
+Bulk selling and conversion to Gems are available only for the signed-in user's own inventory. Open `Show tools`, click Steam's item tiles to toggle their selection, review the proposed batch, and confirm it once before sequential processing begins. `Quick sell` targets the refreshed highest buy order for one unit from each selected asset or stack; it does not undercut the lowest listing, and items without a current buy order are visibly explained and excluded from review. The workflow rechecks ownership, eligibility, and price or Gems value immediately before every request, skips a quick sale if its buy order changed, stops on rate limits, never blindly retries a mutation, and blocks uncertain operations until the page is reloaded.
+
+> [!WARNING]
+> Inventory valuations are estimates, not guarantees. Steam's final price, fees, eligibility, restrictions, and any required mobile or email confirmations are authoritative. Selling or converting an item to Gems can be irreversible.
+
 ### Steam Store search results
 
 - Select games directly from the search results.<>
@@ -63,12 +82,13 @@ The extension is limited to these Steam page patterns:
 
 ```text
 https://steamcommunity.com/my/friends*
+https://steamcommunity.com/my/inventory*
 https://steamcommunity.com/id/*
 https://steamcommunity.com/profiles/*
 https://store.steampowered.com/search*
 ```
 
-It does not request access to every website, WebExtension API permissions, a toolbar action, a background process, or a service worker.
+It does not request access to every website, a background process, or a service worker. Its toolbar popup uses only the WebExtension `storage` permission to retain feature on/off settings.
 
 | Browser | Minimum version |
 | --- | ---: |
@@ -87,13 +107,13 @@ Steam Page Tools has:
 - no developer-operated server; and
 - no developer collection or retention of Steam account data.
 
-The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Store selections and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
+The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Feature on/off preferences use extension-owned local storage. Inventory price data, Store selections, and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
 
 See [PRIVACY.md](PRIVACY.md) for the complete disclosure.
 
 ## Source and development
 
-The Chrome and Firefox packages are built from the same readable source file. The build uses Node.js built-ins for staging and ZIP creation and does not download or generate runtime code.
+The Chrome and Firefox packages are built from the same readable modular sources. The build uses Node.js built-ins for staging and ZIP creation and does not download runtime code. Its generated inventory bundle is a deterministic concatenation of the reviewed source modules.
 
 For contributors:
 
@@ -109,4 +129,6 @@ Generated `dist/` content and installed dependencies are intentionally not commi
 Additional project documentation:
 
 - [CHANGELOG.md](CHANGELOG.md) — version history
+- [INVENTORY_TESTING.md](INVENTORY_TESTING.md) — inventory feature manual test checklist
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
+- [Inventory architecture](src/features/steam-inventory/README.md) — module boundaries, Steam interfaces, and limitations

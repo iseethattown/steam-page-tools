@@ -237,13 +237,35 @@
         }, 250);
     }
 
-    if (location.origin === STEAM_COMMUNITY_ORIGIN) {
-        initSteamProfileTools();
-        initBadgesPageTools();
-        initFriendsPageTools();
-    } else if (location.origin === STEAM_STORE_ORIGIN) {
-        initSearchBulkCart();
+    async function initEnabledFeatures() {
+        const settings = await globalThis.SteamPageToolsSettings
+            .waitForPageSettings();
+
+        if (!settings.enabled) {
+            return;
+        }
+
+        if (location.origin === STEAM_COMMUNITY_ORIGIN) {
+            if (settings.profileTools) {
+                initSteamProfileTools();
+            }
+
+            if (settings.badgeTools) {
+                initBadgesPageTools();
+            }
+
+            if (settings.friendsComments) {
+                initFriendsPageTools();
+            }
+        } else if (
+            location.origin === STEAM_STORE_ORIGIN &&
+            settings.storeTools
+        ) {
+            initSearchBulkCart();
+        }
     }
+
+    initEnabledFeatures();
 
     // Friends page tools.
     function initFriendsPageTools() {

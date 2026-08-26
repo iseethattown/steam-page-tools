@@ -1,15 +1,16 @@
 {
   "name": "steam-page-tools",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
-  "description": "An unofficial Chrome and Firefox extension with Steam profile links, badge tools, friends-page comments, and bulk Store tools.",
+  "description": "An unofficial Chrome and Firefox extension with Steam profile, friends, inventory, and bulk Store tools.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "npm run clean && npm run lint && npm run validate && npm run verify:reproducible && npm run validate",
+    "check": "npm run clean && npm run lint && npm test && npm run validate && npm run verify:reproducible && npm run validate",
     "clean": "node scripts/build.mjs --clean",
     "lint": "eslint .",
     "package": "node scripts/build.mjs",
+    "test": "node --test src/features/steam-inventory/tests/*.test.mjs",
     "validate": "node scripts/validate.mjs",
     "verify:reproducible": "node scripts/verify-reproducible.mjs"
   },

@@ -1,0 +1,58 @@
+{
+  "success": 1,
+  "more_items": 1,
+  "last_assetid": "200",
+  "assets": [
+    {
+      "appid": 753,
+      "contextid": "6",
+      "assetid": "100",
+      "classid": "10",
+      "instanceid": "0",
+      "amount": "5"
+    },
+    {
+      "appid": 753,
+      "contextid": "6",
+      "assetid": "200",
+      "classid": "20",
+      "instanceid": "1",
+      "amount": "1"
+    }
+  ],
+  "descriptions": [
+    {
+      "classid": "10",
+      "instanceid": "0",
+      "name": "<img src=x onerror=alert(1)>",
+      "type": "Trading Card",
+      "market_hash_name": "Safe <Card>",
+      "marketable": 1,
+      "tradable": 1,
+      "market_fee": "0.10",
+      "market_fee_app": 440,
+      "icon_url": "abc_DEF-123",
+      "tags": [
+        {
+          "category": "Game",
+          "localized_tag_name": "Example Game"
+        }
+      ],
+      "owner_actions": [
+        {
+          "name": "Turn into Gems...",
+          "link": "javascript:GetGooValue( 753, 6, 440, 2, 'AABBCC' )"
+        }
+      ]
+    },
+    {
+      "classid": "20",
+      "instanceid": "1",
+      "name": "Unmarketable item",
+      "type": "Background",
+      "marketable": 0,
+      "tradable": 0,
+      "tags": []
+    }
+  ]
+}
