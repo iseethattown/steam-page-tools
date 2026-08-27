@@ -8,6 +8,12 @@ All notable changes to the browser-extension edition are documented here.
 
 - Reduced the normal delay between friends-page profile comments from five seconds to three seconds. Failure recovery and Steam cooldown waits are unchanged.
 
+## 1.3.0 - 2026-08-27
+
+### Added
+
+- Inventory manager and prices
+
 ## 1.2.1 - 2026-08-23
 
 ### Changed

@@ -25,7 +25,7 @@ const distributions = {
         manifest: resolve(repoRoot, 'manifests/chrome.json'),
         archive: resolve(
             distRoot,
-            'steam-page-tools-chrome-v1.2.1.zip'
+            'steam-page-tools-chrome-v1.3.0.zip'
         ),
     },
     firefox: {
@@ -33,17 +33,67 @@ const distributions = {
         manifest: resolve(repoRoot, 'manifests/firefox.json'),
         archive: resolve(
             distRoot,
-            'steam-page-tools-firefox-v1.2.1.zip'
+            'steam-page-tools-firefox-v1.3.0.zip'
         ),
     },
 };
 const sharedFiles = [
+    'src/settings.js',
+    'src/settings-bridge.js',
+    'src/popup.html',
+    'src/popup.css',
+    'src/popup.js',
     'src/content.js',
     'assets/icons/icon-16.png',
     'assets/icons/icon-32.png',
     'assets/icons/icon-48.png',
     'assets/icons/icon-128.png',
 ];
+const inventoryBundlePath =
+    'src/features/steam-inventory/inventory.bundle.js';
+const inventorySourceFiles = [
+    'src/features/steam-inventory/types.js',
+    'src/features/steam-inventory/storage.js',
+    'src/features/steam-inventory/safety.js',
+    'src/features/steam-inventory/market-eligibility.js',
+    'src/features/steam-inventory/steam-api.js',
+    'src/features/steam-inventory/inventory-service.js',
+    'src/features/steam-inventory/pricing-service.js',
+    'src/features/steam-inventory/valuation-service.js',
+    'src/features/steam-inventory/action-service.js',
+    'src/features/steam-inventory/ui/dom.js',
+    'src/features/steam-inventory/ui/inventory-summary.js',
+    'src/features/steam-inventory/ui/inventory-table.js',
+    'src/features/steam-inventory/ui/action-preview-dialog.js',
+    'src/features/steam-inventory/ui/action-progress-dialog.js',
+    'src/features/steam-inventory/ui/styles.js',
+    'src/features/steam-inventory/ui/index.js',
+    'src/features/steam-inventory/index.js',
+];
+
+async function buildInventoryBundle() {
+    const sources = await Promise.all(
+        inventorySourceFiles.map((relativePath) => (
+            readFile(resolve(repoRoot, relativePath), 'utf8')
+        ))
+    );
+
+    return [
+        '// Copyright (C) 2026 x0697x',
+        '(function () {',
+        "    'use strict';",
+        '    const inventoryModules = Object.create(null);',
+        ...sources,
+        '    globalThis.SteamPageToolsSettings.waitForPageSettings()',
+        '        .then((settings) => {',
+        '            if (settings.enabled && settings.inventoryTools) {',
+        '                inventoryModules.index.init();',
+        '            }',
+        '        });',
+        '})();',
+        '',
+    ].join('\n');
+}
 
 function assertInsideRepo(target) {
     const relativePath = relative(repoRoot, target);
@@ -253,6 +303,12 @@ async function buildDistribution({ directory, manifest, archive }) {
         await mkdir(resolve(target, '..'), { recursive: true });
         await copyFile(source, target);
     }
+
+    const inventoryTarget = resolve(directory, inventoryBundlePath);
+
+    assertInsideRepo(inventoryTarget);
+    await mkdir(resolve(inventoryTarget, '..'), { recursive: true });
+    await writeFile(inventoryTarget, await buildInventoryBundle(), 'utf8');
 
     await copyFile(manifest, resolve(directory, 'manifest.json'));
     await writeReproducibleZip(directory, archive);

@@ -1,0 +1,40 @@
+{
+  "success": 1,
+  "more_items": 0,
+  "assets": [
+    {
+      "appid": 753,
+      "contextid": "6",
+      "assetid": "100",
+      "classid": "10",
+      "instanceid": "0",
+      "amount": "5"
+    },
+    {
+      "appid": 753,
+      "contextid": "6",
+      "assetid": "300",
+      "classid": "30",
+      "instanceid": "0",
+      "amount": "1"
+    }
+  ],
+  "descriptions": [
+    {
+      "classid": "30",
+      "instanceid": "0",
+      "name": "Third item",
+      "type": "Emoticon",
+      "market_hash_name": "Third item",
+      "marketable": 1,
+      "tradable": 1,
+      "market_fee_app": 570,
+      "tags": [
+        {
+          "category": "Game",
+          "localized_tag_name": "Another Game"
+        }
+      ]
+    }
+  ]
+}

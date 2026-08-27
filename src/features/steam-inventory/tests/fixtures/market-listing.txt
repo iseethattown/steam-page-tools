@@ -1,0 +1,1 @@
+<script>window.__data="\"queryKey\":[\"market\",\"pricehistory\",753,\"Example\"],\"data\":{\"price_history\":[{\"time\":1787600000,\"price_median\":0.57,\"purchases\":12},{\"time\":1787686400,\"price_median\":0.58,\"purchases\":15}]},\"queryKey\":[\"market\",\"orderbook\",753,\"Example\"],\"data\":{\"amtMaxBuyOrder\":55,\"amtMinSellOrder\":57,\"eCurrency\":3}";</script>
