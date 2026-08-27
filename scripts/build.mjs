@@ -55,6 +55,7 @@ const inventorySourceFiles = [
     'src/features/steam-inventory/types.js',
     'src/features/steam-inventory/storage.js',
     'src/features/steam-inventory/safety.js',
+    'src/features/steam-inventory/market-eligibility.js',
     'src/features/steam-inventory/steam-api.js',
     'src/features/steam-inventory/inventory-service.js',
     'src/features/steam-inventory/pricing-service.js',

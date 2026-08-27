@@ -530,7 +530,11 @@ inventoryModules.index = (() => {
             let progress = null;
             let refreshDialog = null;
             const refreshController = new AbortController();
-            ui.setStatus('Refreshing selected prices for the sale preview…');
+            let marketEligibility = inventoryModules.marketEligibility
+                .readPageEligibility(window);
+            const marketHold = inventoryModules.marketEligibility
+                .readPageHold(document);
+            ui.setStatus('Checking Steam Market access…');
 
             try {
                 refreshDialog = inventoryModules.actionProgressDialog
@@ -539,12 +543,64 @@ inventoryModules.index = (() => {
                             ? 'Preparing quick sales'
                             : 'Preparing Steam Market listings',
                         {
-                            message:
-                                `Refreshing current prices for ` +
-                                `${selected.length} selected item(s)...`,
+                            message: 'Checking Steam Market access...',
                             onCancel: () => refreshController.abort(),
                         }
                     );
+                try {
+                    const fetchedEligibility = await api
+                        .loadMarketEligibility({
+                            signal: refreshController.signal,
+                        });
+
+                    if (fetchedEligibility.allowed !== null) {
+                        marketEligibility = fetchedEligibility;
+                    }
+                } catch (error) {
+                    if (error.code === 'cancelled') {
+                        throw error;
+                    }
+
+                    console.warn(
+                        'Steam Page Tools: Market eligibility check failed',
+                        error
+                    );
+                }
+
+                if (marketEligibility.allowed === false) {
+                    refreshDialog.close();
+                    refreshDialog = null;
+                    ui.setStatus(
+                        'Steam currently restricts Community Market selling. ' +
+                        'No request was sent.',
+                        { error: true }
+                    );
+                    await inventoryModules.actionPreviewDialog
+                        .showMarketRestriction({
+                            eligibility: marketEligibility,
+                            nowMs: Date.now(),
+                        });
+                    return;
+                }
+
+                if (instant && marketHold?.active) {
+                    refreshDialog.close();
+                    refreshDialog = null;
+                    ui.setStatus(
+                        `Quick sell unavailable: Steam will hold the listing ` +
+                        `for ${marketHold.durationText}. No request was sent.`,
+                        { error: true }
+                    );
+                    await inventoryModules.actionPreviewDialog
+                        .showMarketHold({ hold: marketHold, instant: true });
+                    return;
+                }
+
+                ui.setStatus('Refreshing selected prices for the sale preview…');
+                refreshDialog.update(
+                    `Refreshing current prices for ` +
+                    `${selected.length} selected item(s)...`
+                );
                 await refreshSelectedPrices(selected, {
                     onProgress: ({ completed, total }) => {
                         refreshDialog?.update(
@@ -569,6 +625,7 @@ inventoryModules.index = (() => {
                         exclusions: prepared.exclusions,
                         formatMinor,
                         instant,
+                        marketHold,
                         proposals: prepared.proposals,
                         validate: (proposals) => actionService.validateEditedSell({
                             feeConfig,

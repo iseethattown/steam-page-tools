@@ -101,7 +101,7 @@ inventoryModules.uiDom = (() => {
             if (event.key === 'Tab') {
                 const focusable = [...dialog.querySelectorAll(
                     'button:not([disabled]), input:not([disabled]), ' +
-                    'select:not([disabled]), [tabindex="0"]'
+                    'select:not([disabled]), a[href], [tabindex="0"]'
                 )];
 
                 if (!focusable.length) {

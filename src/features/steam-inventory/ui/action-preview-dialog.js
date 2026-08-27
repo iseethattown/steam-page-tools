@@ -35,11 +35,126 @@ inventoryModules.actionPreviewDialog = (() => {
         body.appendChild(details);
     }
 
+    function showMarketRestriction({ eligibility, nowMs = Date.now() }) {
+        return new Promise((resolve) => {
+            const modal = makeModal(
+                'Steam Market selling unavailable',
+                { compact: true, danger: true }
+            );
+            const lead = element('p', {
+                className: 'spt-inventory-danger-text',
+                text: 'Steam reports that this account cannot currently ' +
+                    'sell items on the Community Market.',
+            });
+            const reason = eligibility.reason
+                ? element('p', { text: eligibility.reason })
+                : null;
+            const remaining = inventoryModules.marketEligibility
+                .formatRemaining(eligibility.endsAt, nowMs);
+            const endDate = Number.isFinite(eligibility.endsAt)
+                ? new Date(eligibility.endsAt).toLocaleString()
+                : '';
+            const timing = remaining
+                ? element('p', {
+                    className: 'spt-inventory-restriction-time',
+                    text: `Steam reports that access should return in ` +
+                        `${remaining} (${endDate}).`,
+                })
+                : null;
+            const explanation = element('p', {
+                className: 'spt-inventory-note',
+                text: eligibility.category === 'steam_guard'
+                    ? 'Steam identified this as a Steam Guard restriction. ' +
+                        'If Steam supplies an end time, it is shown above.'
+                    : 'Steam did not expose a verified reason or end time on ' +
+                        'this inventory page. Steam Guard transfers, password ' +
+                        'changes, and other account-security events can have ' +
+                        'different restriction periods.',
+            });
+            const support = element('a', {
+                className: 'btnv6_blue_hoverfade btn_medium',
+                attributes: {
+                    href: inventoryModules.marketEligibility.SUPPORT_URL,
+                    rel: 'noopener noreferrer',
+                    target: '_blank',
+                },
+            });
+            const close = steamButton('Close', { kind: 'gray' });
+
+            support.appendChild(element('span', {
+                text: 'Open Steam restriction help',
+            }));
+            modal.body.appendChild(lead);
+
+            if (reason) {
+                modal.body.appendChild(reason);
+            }
+
+            if (timing) {
+                modal.body.appendChild(timing);
+            }
+
+            modal.body.appendChild(explanation);
+            modal.footer.append(support, close);
+            close.addEventListener('click', () => modal.destroy());
+            modal.open(resolve);
+        });
+    }
+
+    function showMarketHold({ hold, instant = false }) {
+        return new Promise((resolve) => {
+            const modal = makeModal(
+                instant
+                    ? 'Quick sell delayed by Steam'
+                    : 'Steam Market listing hold',
+                { compact: true, danger: true }
+            );
+            const lead = element('p', {
+                className: 'spt-inventory-hold-text',
+                text: `Steam reports that new Market listings will be held ` +
+                    `for ${hold.durationText}.`,
+            });
+            const consequence = element('p', {
+                text: instant
+                    ? 'A held listing cannot complete as an immediate quick ' +
+                        'sale, so nothing was submitted.'
+                    : 'The selected items can be listed, but they will not ' +
+                        'appear on the Market until Steam releases the hold.',
+            });
+            const reason = hold.reason
+                ? element('p', { text: hold.reason })
+                : null;
+            const support = element('a', {
+                className: 'btnv6_blue_hoverfade btn_medium',
+                attributes: {
+                    href: inventoryModules.marketEligibility.SUPPORT_URL,
+                    rel: 'noopener noreferrer',
+                    target: '_blank',
+                },
+            });
+            const close = steamButton('Close', { kind: 'gray' });
+
+            support.appendChild(element('span', {
+                text: 'Open Steam restriction help',
+            }));
+            modal.body.append(lead, consequence);
+
+            if (reason) {
+                modal.body.appendChild(reason);
+            }
+
+            modal.footer.append(support, close);
+            close.addEventListener('click', () => modal.destroy());
+            modal.open(resolve);
+        });
+    }
+
     function showSellReview({
         currencyCode,
         exclusions,
         formatMinor,
         instant = false,
+        marketHold = null,
         proposals,
         validate,
     }) {
@@ -72,6 +187,14 @@ inventoryModules.actionPreviewDialog = (() => {
                 className: 'spt-inventory-validation',
                 attributes: { 'aria-live': 'polite' },
             });
+            const holdNotice = marketHold?.active
+                ? element('p', {
+                    className: 'spt-inventory-hold-text',
+                    text: `Steam will hold these listings for ` +
+                        `${marketHold.durationText}; they will not appear ` +
+                        'on the Market immediately.',
+                })
+                : null;
             const agreement = element('input', {
                 attributes: { type: 'checkbox' },
             });
@@ -106,7 +229,13 @@ inventoryModules.actionPreviewDialog = (() => {
                     text: 'I agree to the Steam Subscriber Agreement and understand that Steam may require an additional confirmation.',
                 })
             );
-            modal.body.append(warning, scroll, totals, validation);
+            modal.body.appendChild(warning);
+
+            if (holdNotice) {
+                modal.body.appendChild(holdNotice);
+            }
+
+            modal.body.append(scroll, totals, validation);
             appendExclusions(modal.body, exclusions, {
                 open: instant && proposals.length === 0,
             });
@@ -225,7 +354,11 @@ inventoryModules.actionPreviewDialog = (() => {
                     `${formatMinor(latest.totals.grossMinor)} buyer total · ` +
                     `${formatMinor(latest.totals.feesMinor)} fees · ` +
                     `${formatMinor(latest.totals.netMinor)} estimated proceeds`;
-                validation.textContent = latest.errors.join(' · ');
+                validation.textContent = instant && proposals.length === 0
+                    ? 'No selected item currently has an active buy order. ' +
+                        'Nothing can be quick sold. This price condition does ' +
+                        'not by itself indicate an account restriction.'
+                    : latest.errors.join(' · ');
                 proceed.disabled = latest.errors.length > 0 || !agreement.checked;
             }
 
@@ -350,6 +483,8 @@ inventoryModules.actionPreviewDialog = (() => {
     return Object.freeze({
         showConfirmation,
         showGemReview,
+        showMarketHold,
+        showMarketRestriction,
         showSellReview,
     });
 })();

@@ -108,6 +108,16 @@ inventoryModules.inventoryStyles = (() => {
                 color: #ff9b8d;
             }
 
+            .spt-inventory-restriction-time {
+                color: #a4d007;
+                font-weight: 500;
+            }
+
+            .spt-inventory-hold-text {
+                color: #d79922;
+                font-weight: 500;
+            }
+
             @keyframes spt-inventory-spin {
                 to { transform: rotate(360deg); }
             }

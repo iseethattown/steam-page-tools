@@ -273,6 +273,14 @@ inventoryModules.steamApi = (() => {
             return request(url, { signal });
         }
 
+        async function loadMarketEligibility({ signal } = {}) {
+            const url = requireSteamUrl('/market/', { l: 'english' });
+            const html = await request(url, { parse: 'text', signal });
+
+            return inventoryModules.marketEligibility
+                .parseMarketEligibilityHtml(html);
+        }
+
         async function loadGemQuote({
             ownerSteamId,
             sessionId,
@@ -371,6 +379,7 @@ inventoryModules.steamApi = (() => {
             convertToGems,
             loadGemQuote,
             loadInventoryPage,
+            loadMarketEligibility,
             loadMarketListing,
             loadOrderHistogram,
             loadPriceHistory,

@@ -3,7 +3,11 @@ import test from 'node:test';
 
 import { loadModules, response } from './helpers.mjs';
 
-const modules = await loadModules(['types.js', 'steam-api.js']);
+const modules = await loadModules([
+    'types.js',
+    'market-eligibility.js',
+    'steam-api.js',
+]);
 
 test('retries safe reads with bounded backoff and honors Retry-After', async () => {
     let calls = 0;
@@ -87,6 +91,25 @@ test('requests the exact Steam Market bucket for grouped variants', async () => 
     assert.equal(url.searchParams.get('category_Exterior'), 'WearCategory3');
     assert.equal(url.searchParams.get('category_Quality'), 'normal');
     assert.equal(url.searchParams.get('currency'), '3');
+});
+
+test('loads the signed-in Steam Market eligibility notice', async () => {
+    let requestedUrl = '';
+    const api = modules.steamApi.createSteamApi({
+        fetchImpl: async (url) => {
+            requestedUrl = String(url);
+            return response({
+                body: '<script>var g_bMarketAllowed = false;</script>',
+                text: true,
+            });
+        },
+    });
+    const result = await api.loadMarketEligibility();
+    const url = new URL(requestedUrl);
+
+    assert.equal(url.pathname, '/market/');
+    assert.equal(url.searchParams.get('l'), 'english');
+    assert.equal(result.allowed, false);
 });
 
 test('uses profile-scoped asset endpoints for Gems actions', async () => {
