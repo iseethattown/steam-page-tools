@@ -254,7 +254,7 @@
             return;
         }
 
-        const COMMENT_DELAY_MS = 5 * 1000;
+        const COMMENT_DELAY_MS = 3 * 1000;
         const FAILURE_DELAY_MS = 20 * 1000;
         const COOLDOWN_MIN_MS = 10 * 1000;
         const COOLDOWN_MAX_MS = 15 * 1000;
@@ -589,7 +589,7 @@
 
             pace.className = 'spt-friends-comment-note';
             pace.textContent =
-                'There is a 5-second delay between comments. Profiles that ' +
+                'There is a 3-second delay between comments. Profiles that ' +
                 'do not accept comments are skipped automatically.';
 
             const selectedSteamIds = new Set();

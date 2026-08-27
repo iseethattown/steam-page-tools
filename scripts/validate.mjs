@@ -264,7 +264,7 @@ async function validateContentSource() {
         'const selectedSteamIds = new Set();',
         'checkbox.checked = false;',
         '/comment/Profile/post/',
-        'COMMENT_DELAY_MS = 5 * 1000',
+        'COMMENT_DELAY_MS = 3 * 1000',
         'FAILURE_DELAY_MS = 20 * 1000',
         'COOLDOWN_MIN_MS = 10 * 1000',
         'COOLDOWN_MAX_MS = 15 * 1000',
