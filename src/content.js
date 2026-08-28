@@ -4,7 +4,7 @@
 
     const STEAM_COMMUNITY_ORIGIN = 'https://steamcommunity.com';
     const STEAM_STORE_ORIGIN = 'https://store.steampowered.com';
-    const STEAMSETS_PROFILE_ORIGIN = 'https://beta.steamsets.com';
+    const STEAMSETS_PROFILE_ORIGIN = 'https://steamsets.com';
     const STEAMSETS_BADGE_SEARCH_URL =
         'https://beta.steamsets.com/badges/search';
     const STEAM_ID64_ACCOUNT_BASE = 76561197960265728n;
