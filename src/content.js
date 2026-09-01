@@ -3726,16 +3726,70 @@
         // Map app IDs to their display names and rendered checkboxes.
         const selected = new Map();
         let busy = false;
+        let selectionTouched = false;
+        let persistTimer = null;
+        let persistQueued = false;
+        let persistDurable = false;
+        let persistWriting = false;
+        let lastIndexedPayload = '';
+        let lastLocalPayload = '';
+        let selectionDbPromise = null;
+        const PERSIST_DEBOUNCE_MS = 400;
+        const IDB_NAME = 'spt-store-tools';
+        const IDB_STORE = 'kv';
+        const IDB_VERSION = 1;
 
         injectStyles();
+        bindCheckboxDelegation();
 
         const bar = buildBar();
         document.body.appendChild(bar.el);
 
         restoreSelection();
+        restoreIndexedSelection();
+        bindPersistLifecycle();
 
         // Persist selections until each game succeeds or the user clears
         // them, including across navigation and browser restarts.
+        //
+        // Steam's store origin already keeps a huge localStorage blob
+        // (owned apps, wishlist, ignored titles, packages). Chromium
+        // rewrites that entire origin store on every setItem, so saving
+        // on each checkbox click freezes the search page for longer as
+        // the selection grows. Clicks stay in memory; IndexedDB absorbs
+        // the background write; localStorage is only used to restore
+        // older sessions and to flush when the tab hides or a bulk run
+        // finishes.
+        function parseSelectionPayload(raw) {
+            if (raw === null || raw === undefined || raw === '') {
+                return null;
+            }
+
+            let parsed;
+
+            try {
+                parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            } catch {
+                return null;
+            }
+
+            const items = parsed && typeof parsed === 'object' && parsed.items
+                && typeof parsed.items === 'object'
+                && !Array.isArray(parsed.items)
+                ? parsed.items
+                : parsed;
+
+            if (!items || typeof items !== 'object' || Array.isArray(items)) {
+                return null;
+            }
+
+            return new Map(
+                Object.entries(items).filter(
+                    ([appid, name]) => /^\d+$/.test(appid) && typeof name === 'string'
+                )
+            );
+        }
+
         function loadStoredSelection() {
             try {
                 let raw = localStorage.getItem(STORAGE_KEY);
@@ -3763,25 +3817,247 @@
                     return new Map();
                 }
 
-                return new Map(Object.entries(JSON.parse(raw)));
+                lastLocalPayload = raw;
+                return parseSelectionPayload(raw) || new Map();
             } catch (err) {
                 console.error('Steam Page Tools: failed to read saved selection', err);
                 return new Map();
             }
         }
 
-        function saveSelection() {
-            try {
-                const obj = {};
+        function serializeSelection() {
+            const items = {};
 
-                selected.forEach((info, appid) => {
-                    obj[appid] = info.name;
+            selected.forEach((info, appid) => {
+                items[appid] = info.name;
+            });
+
+            return JSON.stringify(items);
+        }
+
+        function openSelectionDb() {
+            if (selectionDbPromise) {
+                return selectionDbPromise;
+            }
+
+            selectionDbPromise = new Promise((resolve) => {
+                if (!window.indexedDB) {
+                    resolve(null);
+                    return;
+                }
+
+                let request;
+
+                try {
+                    request = window.indexedDB.open(IDB_NAME, IDB_VERSION);
+                } catch {
+                    resolve(null);
+                    return;
+                }
+
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+
+                    if (!db.objectStoreNames.contains(IDB_STORE)) {
+                        db.createObjectStore(IDB_STORE);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => {
+                    selectionDbPromise = null;
+                    resolve(null);
+                };
+            });
+
+            return selectionDbPromise;
+        }
+
+        function writeIndexedSelection(payload) {
+            if (payload === lastIndexedPayload) {
+                return Promise.resolve(true);
+            }
+
+            return openSelectionDb().then((db) => {
+                if (!db) {
+                    return false;
+                }
+
+                return new Promise((resolve) => {
+                    try {
+                        const tx = db.transaction(IDB_STORE, 'readwrite');
+
+                        tx.oncomplete = () => {
+                            lastIndexedPayload = payload;
+                            resolve(true);
+                        };
+                        tx.onerror = () => resolve(false);
+                        tx.onabort = () => resolve(false);
+                        tx.objectStore(IDB_STORE).put(payload, STORAGE_KEY);
+                    } catch {
+                        resolve(false);
+                    }
                 });
+            });
+        }
 
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+        function readIndexedSelection() {
+            return openSelectionDb().then((db) => {
+                if (!db) {
+                    return null;
+                }
+
+                return new Promise((resolve) => {
+                    try {
+                        const tx = db.transaction(IDB_STORE, 'readonly');
+                        const request = tx.objectStore(IDB_STORE).get(STORAGE_KEY);
+
+                        request.onsuccess = () => {
+                            const value = request.result;
+
+                            if (typeof value !== 'string') {
+                                resolve(null);
+                                return;
+                            }
+
+                            const stored = parseSelectionPayload(value);
+
+                            if (stored) {
+                                lastIndexedPayload = value;
+                            }
+
+                            resolve(stored);
+                        };
+                        request.onerror = () => resolve(null);
+                    } catch {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function persistToLocalStorage(payload) {
+            if (payload === lastLocalPayload) {
+                return;
+            }
+
+            try {
+                localStorage.setItem(STORAGE_KEY, payload);
+                lastLocalPayload = payload;
             } catch (err) {
                 console.error('Steam Page Tools: failed to save selection', err);
             }
+        }
+
+        function flushSave(options = {}) {
+            if (persistTimer !== null) {
+                clearTimeout(persistTimer);
+                persistTimer = null;
+            }
+
+            const durable = Boolean(options.durable) || persistDurable;
+
+            persistDurable = false;
+
+            if (!persistQueued && !durable) {
+                return;
+            }
+
+            persistQueued = false;
+
+            const payload = serializeSelection();
+
+            if (durable) {
+                persistToLocalStorage(payload);
+            }
+
+            if (persistWriting) {
+                persistQueued = true;
+                return;
+            }
+
+            persistWriting = true;
+
+            writeIndexedSelection(payload)
+                .catch(() => false)
+                .then((ok) => {
+                    persistWriting = false;
+
+                    if (!ok && !durable) {
+                        persistToLocalStorage(payload);
+                    }
+
+                    if (persistQueued || persistDurable) {
+                        flushSave({ durable: persistDurable });
+                    }
+                });
+        }
+
+        // Coalesce checkbox churn into one background write. Immediate
+        // durable flushes stay reserved for tab hide and finished runs.
+        function saveSelection(options = {}) {
+            persistQueued = true;
+
+            if (options.durable) {
+                persistDurable = true;
+            }
+
+            if (options.immediate) {
+                flushSave({ durable: persistDurable });
+                return;
+            }
+
+            if (persistTimer !== null) {
+                clearTimeout(persistTimer);
+            }
+
+            persistTimer = setTimeout(() => {
+                persistTimer = null;
+                flushSave();
+            }, PERSIST_DEBOUNCE_MS);
+        }
+
+        function applyStoredSelection(stored, statusText) {
+            stored.forEach((name, appid) => {
+                const info = selected.get(appid);
+
+                if (info) {
+                    info.name = name;
+                } else {
+                    selected.set(appid, { name, box: null });
+                }
+            });
+
+            syncCheckboxStates();
+            updateBar();
+
+            if (statusText && selected.size) {
+                setStatus(statusText);
+            }
+        }
+
+        function syncCheckboxStates() {
+            document.querySelectorAll('.spt-cart-checkbox').forEach((box) => {
+                const appid = box.dataset.sptAppid;
+
+                if (!appid) {
+                    return;
+                }
+
+                const info = selected.get(appid);
+                const checked = Boolean(info);
+
+                box.classList.toggle('spt-checked', checked);
+                box.setAttribute('aria-checked', checked ? 'true' : 'false');
+
+                if (info) {
+                    info.box = box;
+                }
+            });
+        }
+
+        function setBoxChecked(box, checked) {
+            box.classList.toggle('spt-checked', checked);
+            box.setAttribute('aria-checked', checked ? 'true' : 'false');
         }
 
         // Restored selections acquire a checkbox reference when their row is
@@ -3793,12 +4069,96 @@
                 return;
             }
 
-            stored.forEach((name, appid) => {
-                selected.set(appid, { name, box: null });
+            applyStoredSelection(
+                stored,
+                `Restored ${stored.size} selected game(s) from before.`
+            );
+        }
+
+        function restoreIndexedSelection() {
+            readIndexedSelection()
+                .then((stored) => {
+                    if (stored === null || selectionTouched) {
+                        return;
+                    }
+
+                    selected.forEach((info, appid) => {
+                        if (!stored.has(appid) && info.box) {
+                            setBoxChecked(info.box, false);
+                        }
+                    });
+
+                    selected.clear();
+                    applyStoredSelection(
+                        stored,
+                        stored.size
+                            ? `Restored ${stored.size} selected game(s) from before.`
+                            : ''
+                    );
+                })
+                .catch((err) => {
+                    console.warn(
+                        'Steam Page Tools: could not read indexed selection',
+                        err
+                    );
+                });
+        }
+
+        function bindPersistLifecycle() {
+            window.addEventListener('pagehide', () => {
+                saveSelection({ immediate: true, durable: true });
             });
 
-            updateBar();
-            setStatus(`Restored ${stored.size} selected game(s) from before.`);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    saveSelection({ immediate: true, durable: true });
+                }
+            });
+        }
+
+        function bindCheckboxDelegation() {
+            function handleCheckboxGesture(event) {
+                const box = event.target.closest
+                    ? event.target.closest('.spt-cart-checkbox')
+                    : null;
+
+                if (!box) {
+                    return;
+                }
+
+                if (
+                    event.type === 'keydown' &&
+                    event.key !== 'Enter' &&
+                    event.key !== ' '
+                ) {
+                    return;
+                }
+
+                event.stopPropagation();
+
+                if (event.type === 'mousedown') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (event.repeat) {
+                    return;
+                }
+
+                const appid = box.dataset.sptAppid;
+                const name = box.dataset.sptName || `App ${appid}`;
+
+                if (!appid) {
+                    return;
+                }
+
+                toggleSelection(appid, name, box);
+            }
+
+            document.addEventListener('mousedown', handleCheckboxGesture, true);
+            document.addEventListener('click', handleCheckboxGesture, true);
+            document.addEventListener('keydown', handleCheckboxGesture, true);
         }
 
         function clearSelection() {
@@ -3806,19 +4166,21 @@
                 return;
             }
 
+            selectionTouched = true;
+
             selected.forEach((info) => {
                 if (info.box) {
-                    info.box.classList.remove('spt-checked');
-                    info.box.setAttribute('aria-checked', 'false');
+                    setBoxChecked(info.box, false);
                 }
             });
 
             selected.clear();
-            saveSelection();
+            saveSelection({ immediate: true, durable: true });
             updateBar();
         }
 
         let scanAttempts = 0;
+        let resultsObserver = null;
 
         const scanInterval = setInterval(() => {
             scanAttempts += 1;
@@ -3840,27 +4202,77 @@
             }
         }, 250);
 
-        // Observe infinite-scroll results as well as the initial result set.
+        function isResultsContainer(node) {
+            return Boolean(
+                node &&
+                node.nodeType === 1 &&
+                (node.id === 'search_resultsRows' ||
+                    (node.classList &&
+                        node.classList.contains('search_results_rows')))
+            );
+        }
+
+        function collectRows(node, rows) {
+            if (node.nodeType !== 1) {
+                return;
+            }
+
+            if (node.matches && node.matches('.search_result_row')) {
+                rows.push(node);
+                return;
+            }
+
+            if (isResultsContainer(node)) {
+                node.querySelectorAll('.search_result_row').forEach((row) => {
+                    rows.push(row);
+                });
+                return;
+            }
+
+            if (node.querySelectorAll) {
+                node.querySelectorAll('.search_result_row').forEach((row) => {
+                    rows.push(row);
+                });
+            }
+        }
+
+        // Watch the result list itself, not every nested mutation. Steam's
+        // hover tooltips and our checkboxes would otherwise re-enter the
+        // observer on every click. Parent childList coverage is enough to
+        // catch a swapped results container after a sort or filter change.
         function observeResults(container) {
-            const observer = new MutationObserver((mutations) => {
+            if (resultsObserver) {
+                resultsObserver.observe(container, { childList: true });
+                return;
+            }
+
+            const root = container.parentElement || container;
+
+            resultsObserver = new MutationObserver((mutations) => {
+                const rows = [];
+
                 for (const mutation of mutations) {
                     mutation.addedNodes.forEach((node) => {
-                        if (node.nodeType !== 1) {
-                            return;
-                        }
+                        collectRows(node, rows);
 
-                        if (node.matches && node.matches('.search_result_row')) {
-                            processRow(node);
-                        } else if (node.querySelectorAll) {
-                            node
-                                .querySelectorAll('.search_result_row')
-                                .forEach(processRow);
+                        if (isResultsContainer(node)) {
+                            resultsObserver.observe(node, { childList: true });
                         }
                     });
                 }
+
+                if (!rows.length) {
+                    return;
+                }
+
+                rows.forEach(processRow);
             });
 
-            observer.observe(container, { childList: true, subtree: true });
+            resultsObserver.observe(container, { childList: true });
+
+            if (root !== container) {
+                resultsObserver.observe(root, { childList: true });
+            }
         }
 
         function extractAppId(row) {
@@ -3882,12 +4294,24 @@
             return match ? match[1] : null;
         }
 
-        function processRow(row) {
-            if (row.dataset.sptProcessed) {
-                return;
+        function bindBoxState(box, appid, name) {
+            box.dataset.sptAppid = appid;
+            box.dataset.sptName = name;
+
+            const info = selected.get(appid);
+            const checked = Boolean(info);
+
+            if (info) {
+                info.box = box;
             }
 
-            row.dataset.sptProcessed = '1';
+            setBoxChecked(box, checked);
+        }
+
+        function processRow(row) {
+            if (!row || row.nodeType !== 1) {
+                return;
+            }
 
             const appid = extractAppId(row);
 
@@ -3897,12 +4321,19 @@
 
             const nameEl = row.querySelector('.title');
             const name = nameEl ? nameEl.textContent.trim() : `App ${appid}`;
+            const existing = row.querySelector('.spt-cart-checkbox');
+
+            if (existing) {
+                bindBoxState(existing, appid, name);
+                return;
+            }
 
             // Position against the capsule; the full row includes the price
-            // column.
+            // column. CSS covers the usual capsule case without forcing
+            // layout via getComputedStyle.
             const capsule = row.querySelector('.search_capsule') || row;
 
-            if (getComputedStyle(capsule).position === 'static') {
+            if (!capsule.classList.contains('search_capsule')) {
                 capsule.style.position = 'relative';
             }
 
@@ -3911,33 +4342,8 @@
             box.className = 'spt-cart-checkbox';
             box.tabIndex = 0;
             box.setAttribute('role', 'checkbox');
-            box.setAttribute('aria-checked', 'false');
             box.title = 'Select for bulk cart or wishlist actions';
-
-            if (selected.has(appid)) {
-                const info = selected.get(appid);
-
-                info.box = box;
-                box.classList.add('spt-checked');
-                box.setAttribute('aria-checked', 'true');
-            }
-
-            // Prevent the checkbox from following the enclosing result link.
-            box.addEventListener('mousedown', (e) => e.stopPropagation());
-            box.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleSelection(appid, name, box);
-            });
-
-            box.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleSelection(appid, name, box);
-                }
-            });
-
+            bindBoxState(box, appid, name);
             capsule.appendChild(box);
         }
 
@@ -3946,14 +4352,14 @@
                 return;
             }
 
+            selectionTouched = true;
+
             if (selected.has(appid)) {
                 selected.delete(appid);
-                box.classList.remove('spt-checked');
-                box.setAttribute('aria-checked', 'false');
+                setBoxChecked(box, false);
             } else {
                 selected.set(appid, { name, box });
-                box.classList.add('spt-checked');
-                box.setAttribute('aria-checked', 'true');
+                setBoxChecked(box, true);
             }
 
             saveSelection();
@@ -4146,8 +4552,7 @@
             selected.delete(appid);
 
             if (info.box) {
-                info.box.classList.remove('spt-checked');
-                info.box.setAttribute('aria-checked', 'false');
+                setBoxChecked(info.box, false);
             }
         }
 
@@ -4405,6 +4810,7 @@
                         );
                     }
                 } finally {
+                    saveSelection({ immediate: true, durable: true });
                     setActionBusy(false);
                 }
             }
@@ -4526,6 +4932,7 @@
 
                     setStatus(message, 'wishlist');
                 } finally {
+                    saveSelection({ immediate: true, durable: true });
                     setActionBusy(false);
                 }
             }
@@ -4540,6 +4947,10 @@
             const style = document.createElement('style');
 
             style.textContent = `
+                .search_result_row .search_capsule {
+                    position: relative;
+                }
+
                 .spt-cart-checkbox {
                     position: absolute;
                     bottom: 4px;

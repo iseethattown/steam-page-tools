@@ -107,7 +107,7 @@ Steam Page Tools has:
 - no developer-operated server; and
 - no developer collection or retention of Steam account data.
 
-The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Feature on/off preferences use extension-owned local storage. Inventory price data, Store selections, friends-comment recipients, and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
+The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Feature on/off preferences use extension-owned local storage. Inventory price data, Store selections, friends-comment recipients, and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin. Store search selections are kept in page memory while you click, then written to that Steam-origin storage in the background.
 
 See [PRIVACY.md](PRIVACY.md) for the complete disclosure.
 

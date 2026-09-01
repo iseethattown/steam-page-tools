@@ -4,6 +4,10 @@ All notable changes to the browser-extension edition are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- Store search bulk selection no longer freezes the page as more games are checked. Checkbox clicks now update memory and the action bar only; Steam-origin storage is written in the background and flushed when the tab hides or a cart/wishlist run finishes.
+
 ## 1.3.1 - 2026-09-01
 
 ### Added

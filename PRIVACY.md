@@ -61,7 +61,7 @@ The toolbar settings popup stores one extension-owned record, `spt-feature-setti
 
 The extension deliberately retains the existing Steam-origin storage behavior:
 
-- `spt-search-cart-selection` stores selected Steam app IDs and display names on `store.steampowered.com` until each item succeeds or the user clears the selection.
+- `spt-search-cart-selection` stores selected Steam app IDs and display names on `store.steampowered.com` until each item succeeds or the user clears the selection. While boxes are being checked, the live selection stays in the current page's memory and in Steam-origin IndexedDB (`spt-store-tools`) so the search page does not rewrite Steam's large `localStorage` blob on every click. The `localStorage` key is updated when the tab hides, unloads, or a bulk cart/wishlist run finishes, and is still used to restore older saved selections.
 - `dbf-search-cart-selection`, if present from an older script version, is migrated to the `spt-` key and removed when storage access permits.
 - `spt-badge-auto-craft-lock` coordinates crafting tabs on `steamcommunity.com`. Its lock expires after 60 seconds and is removed when a run ends normally.
 - `spt-friends-comment-lock` coordinates friends-comment runs across `steamcommunity.com` tabs. It contains only a random run owner and timestamp, expires after 30 seconds, and is removed when a run ends normally.
