@@ -4111,7 +4111,7 @@
 
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
-                    saveSelection({ immediate: true, durable: true });
+                    saveSelection({ immediate: true });
                 }
             });
         }
