@@ -4,6 +4,10 @@ All notable changes to the browser-extension edition are documented here.
 
 ## Unreleased
 
+### Added
+
+- Remember the last chosen friends-page comment recipients and restore them the next time the dialog opens. Friends who are no longer on the list stay unselected.
+
 ## 1.3.0 - 2026-08-27
 
 ### Added

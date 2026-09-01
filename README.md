@@ -38,7 +38,7 @@ On the signed-in user's own badge pages:
 
 On the signed-in user's friends page:
 
-- Open a Steam-styled dialog, search the friends list, and explicitly choose which profiles should receive the reviewed comment; no recipient is selected by default.
+- Open a Steam-styled dialog, search the friends list, and explicitly choose which profiles should receive the reviewed comment. Recipients start unselected until you pick them; the last selection is restored the next time you open the dialog.
 - Follow live posted, skipped, and failed counts, progress, and the current profile.
 - Wait three seconds between comments, skip profiles that do not allow comments, wait 20 seconds after other failures before continuing, and retry bounded cooldown responses after a randomized 10-to-15-second delay (or Steam's longer `Retry-After` value).
 - Stop safely after the current request and prevent duplicate runs across Steam tabs.
@@ -107,7 +107,7 @@ Steam Page Tools has:
 - no developer-operated server; and
 - no developer collection or retention of Steam account data.
 
-The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Feature on/off preferences use extension-owned local storage. Inventory price data, Store selections, and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
+The extension processes relevant Steam page and account state locally. Session identifiers and action parameters are transmitted only to Steam when needed for a user-requested operation. Feature on/off preferences use extension-owned local storage. Inventory price data, Store selections, friends-comment recipients, and the short-lived crafting and friends-comment locks use storage owned by the corresponding Steam origin.
 
 See [PRIVACY.md](PRIVACY.md) for the complete disclosure.
 
