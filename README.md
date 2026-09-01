@@ -129,6 +129,4 @@ Generated `dist/` content and installed dependencies are intentionally not commi
 Additional project documentation:
 
 - [CHANGELOG.md](CHANGELOG.md) — version history
-- [INVENTORY_TESTING.md](INVENTORY_TESTING.md) — inventory feature manual test checklist
 - [PRIVACY.md](PRIVACY.md) — data handling and retention
-- [Inventory architecture](src/features/steam-inventory/README.md) — module boundaries, Steam interfaces, and limitations
