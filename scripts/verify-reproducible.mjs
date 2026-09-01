@@ -10,11 +10,11 @@ const buildScript = resolve(repoRoot, 'scripts/build.mjs');
 const archives = [
     resolve(
         repoRoot,
-        'dist/steam-page-tools-chrome-v1.3.0.zip'
+        'dist/steam-page-tools-chrome-v1.3.1.zip'
     ),
     resolve(
         repoRoot,
-        'dist/steam-page-tools-firefox-v1.3.0.zip'
+        'dist/steam-page-tools-firefox-v1.3.1.zip'
     ),
 ];
 
