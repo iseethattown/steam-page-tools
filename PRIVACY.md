@@ -16,6 +16,7 @@ On supported Steam Community profile and badge pages, the extension may read:
 On the signed-in user's supported Steam Community friends page, the extension may read:
 
 - Friend Steam IDs and display names rendered in the friends list so it can build the user-requested recipient queue and show progress.
+- The last chosen recipient Steam IDs, restored locally the next time the comment dialog opens.
 - The profile comment entered in the extension dialog. The comment is kept only in that page's memory for the active dialog and run.
 - Steam comment responses, including success, privacy-setting, cooldown, authentication, and network errors.
 - The Steam session identifier exposed by the page or the `sessionid` cookie when the user starts a comment run.
@@ -64,6 +65,7 @@ The extension deliberately retains the existing Steam-origin storage behavior:
 - `dbf-search-cart-selection`, if present from an older script version, is migrated to the `spt-` key and removed when storage access permits.
 - `spt-badge-auto-craft-lock` coordinates crafting tabs on `steamcommunity.com`. Its lock expires after 60 seconds and is removed when a run ends normally.
 - `spt-friends-comment-lock` coordinates friends-comment runs across `steamcommunity.com` tabs. It contains only a random run owner and timestamp, expires after 30 seconds, and is removed when a run ends normally.
+- `spt-friends-comment-selection` stores the last chosen friends-comment recipient Steam IDs on `steamcommunity.com` until the user changes the selection. IDs that are no longer on the friends page are ignored on restore and are not transmitted to Steam until a later confirmed comment run.
 - `spt-inventory-price-cache-v1` stores Steam Market results and retrieval times for up to 15 minutes. Entries are separated by Steam currency, country, app, and market hash name.
 - `spt-inventory-settings-v1` may contain legacy inventory preferences from an earlier extension build. Current builds ignore its former action-mode, dry-run, batch-limit, and typed-confirmation fields.
 - Steam's `unUserdataVersion` value is incremented to invalidate the Store's dynamic wishlist cache.
@@ -71,7 +73,7 @@ The extension deliberately retains the existing Steam-origin storage behavior:
 
 Submitted or uncertain operation identifiers, in-progress selections, and Gems quotes stay only in the current page's memory. Selection is disabled if the signed-in Steam account changes.
 
-To delete feature preferences, clear this extension's stored data or uninstall it. To delete retained selection or lock data, clear site data for the applicable Steam origin in the browser. The Store selection can also be removed with the extension's clear-selection control. Uninstalling the extension does not necessarily erase Steam website `localStorage`, because that storage belongs to the Steam origin.
+To delete feature preferences, clear this extension's stored data or uninstall it. To delete retained selection or lock data, clear site data for the applicable Steam origin in the browser. The Store selection can also be removed with the extension's clear-selection control. Clearing every friend in the comment dialog also removes the saved friends-comment recipients. Uninstalling the extension does not necessarily erase Steam website `localStorage`, because that storage belongs to the Steam origin.
 
 ## Destructive operations
 

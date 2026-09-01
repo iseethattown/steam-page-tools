@@ -282,6 +282,7 @@
         const COOLDOWN_MAX_MS = 15 * 1000;
         const MAX_COOLDOWN_RETRIES = 3;
         const COMMENT_LOCK_KEY = 'spt-friends-comment-lock';
+        const COMMENT_SELECTION_KEY = 'spt-friends-comment-selection';
         const COMMENT_LOCK_TTL_MS = 30 * 1000;
         const lockOwner =
             `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -407,6 +408,51 @@
             } catch (err) {
                 console.warn(
                     'Steam Page Tools: failed to release friends comment lock',
+                    err
+                );
+            }
+        }
+
+        // Restore the last explicitly chosen recipients. Missing, malformed,
+        // or no-longer-listed Steam IDs are ignored so a first visit still
+        // starts with nobody selected.
+        function loadSavedFriendSelection() {
+            try {
+                const raw = localStorage.getItem(COMMENT_SELECTION_KEY);
+
+                if (!raw) {
+                    return [];
+                }
+
+                const parsed = JSON.parse(raw);
+
+                if (!Array.isArray(parsed)) {
+                    return [];
+                }
+
+                return [...new Set(
+                    parsed
+                        .map((steamid) => String(steamid))
+                        .filter((steamid) => /^\d{17}$/.test(steamid))
+                )];
+            } catch (err) {
+                console.error(
+                    'Steam Page Tools: failed to read saved friend selection',
+                    err
+                );
+                return [];
+            }
+        }
+
+        function saveFriendSelection(steamids) {
+            try {
+                localStorage.setItem(
+                    COMMENT_SELECTION_KEY,
+                    JSON.stringify([...steamids])
+                );
+            } catch (err) {
+                console.error(
+                    'Steam Page Tools: failed to save friend selection',
                     err
                 );
             }
@@ -614,7 +660,14 @@
                 'There is a 3-second delay between comments. Profiles that ' +
                 'do not accept comments are skipped automatically.';
 
-            const selectedSteamIds = new Set();
+            const knownSteamIds = new Set(
+                friends.map((friend) => friend.steamid)
+            );
+            const selectedSteamIds = new Set(
+                loadSavedFriendSelection().filter((steamid) =>
+                    knownSteamIds.has(steamid)
+                )
+            );
             const selector = document.createElement('section');
 
             selector.className = 'spt-friends-selector';
@@ -690,7 +743,7 @@
 
                 checkbox.type = 'checkbox';
                 checkbox.value = friend.steamid;
-                checkbox.checked = false;
+                checkbox.checked = selectedSteamIds.has(friend.steamid);
                 checkbox.setAttribute(
                     'aria-label',
                     `Post the comment to ${friend.name}`
@@ -878,6 +931,7 @@
                     }
                 });
 
+                saveFriendSelection(selectedSteamIds);
                 updateSelectionSummary();
             }
 
@@ -1144,6 +1198,7 @@
                         selectedSteamIds.delete(option.friend.steamid);
                     }
 
+                    saveFriendSelection(selectedSteamIds);
                     updateSelectionSummary();
                 });
             });
